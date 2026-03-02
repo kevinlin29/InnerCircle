@@ -4,7 +4,7 @@
 
 | Name | Student Number | Email |
 |------|---------------|-------|
-| Member 1 | | |
+| Qiwen Lin | 101| qw.lin@mail.utoronto.ca |
 | Member 2 | | |
 | Member 3 | | |
 | Member 4 | | |
