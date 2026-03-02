@@ -1,13 +1,14 @@
-# InnerCircle — A Small-Circle Social Media Platform
+# InnerCircle : A Small-Circle Social Media Platform
 
 ## Team Information
 
 | Name | Student Number | Email |
 |------|---------------|-------|
 | Qiwen Lin | 1012495104 | qw.lin@mail.utoronto.ca |
-| Member 2 | | |
-| Member 3 | | |
-| Member 4 | | |
+| Irys Zhang | 1012794424 | irys.zhang@mail.utoronto.ca |
+| Weijie Zhu | 1009310906 | weijie.zhu@mail.utoronto.ca |
+| Zhengyang Li | 1012373977 | zhengyang.li@mail.utoronto.ca |
+
 
 ---
 
@@ -15,11 +16,11 @@
 
 Mainstream social media platforms like Instagram, Twitter, and Facebook encourage users to accumulate large follower counts and broadcast content to wide audiences. This design prioritizes engagement metrics over meaningful connection, often leading to shallow interactions, social comparison, and content overload.
 
-Research consistently shows that people maintain meaningful relationships with only a small number of close friends (Dunbar's number suggests roughly 5–15 intimate connections). Yet, existing platforms provide little support for this kind of intimate sharing — posts are either fully public or hidden behind clunky privacy settings.
+Research consistently shows that people maintain meaningful relationships with only a small number of close friends (Dunbar's number suggests roughly 5-15 intimate connections). Yet, existing platforms provide little support for this kind of intimate sharing, as posts are often either fully public or restricted by clunky privacy settings.
 
 **Existing solutions and their limitations**: Platforms like BeReal attempt to encourage authenticity but still operate on an open follower model with no cap on connections. Close Friends lists on Instagram are an afterthought rather than a core design principle. Group chats on messaging apps (WhatsApp, iMessage) lack the social feed and profile features that make social media engaging. None of these solutions structurally enforce small, meaningful networks.
 
-**InnerCircle** addresses this gap by enforcing a limited friend count (approximately 20–30 connections max, configurable), ensuring that every post, message, and interaction happens within a small, trusted group. The platform is designed for users who want a social media experience that feels personal rather than performative.
+**InnerCircle** addresses this gap by enforcing a limited friend count (approximately 20-30 connections max, configurable), ensuring that every post, message, and interaction happens within a small, trusted group. The platform is designed for users who want a social media experience that feels personal rather than performative.
 
 **Target users**: Young adults and students who want to stay connected with close friends through photo sharing and real-time messaging, without the noise and pressure of large-scale social networks.
 
@@ -83,15 +84,15 @@ The layout is fully responsive, adapting from a sidebar navigation on desktop to
 
 We plan to implement the following five advanced features, of which at least two are required by the course:
 
-1. **User Authentication and Authorization** — Registration, login, session management, and protected routes using Better Auth. Friend-based access control ensures only friends can view posts and send messages.
+1. **User Authentication and Authorization** : Registration, login, session management, and protected routes using Better Auth. Friend-based access control ensures only friends can view posts and send messages.
 
-2. **Real-Time Functionality** — Live one-on-one chat via Socket.io, real-time notification delivery, and online/offline status indicators. No page refresh is required for new messages or notifications.
+2. **Real-Time Functionality** : Live one-on-one chat via Socket.io, real-time notification delivery, and online/offline status indicators. No page refresh is required for new messages or notifications.
 
-3. **File Handling and Processing** — Server-side image compression, thumbnail generation, and format conversion. Client-side image cropping before upload. Support for multiple image formats.
+3. **File Handling and Processing** : Server-side image compression, thumbnail generation, and format conversion. Client-side image cropping before upload. Support for multiple image formats.
 
-4. **Advanced State Management** — Redux Toolkit for managing feed, chat, notification, and friend status state across components. Centralized state enables consistent UI updates.
+4. **Advanced State Management** : Redux Toolkit for managing feed, chat, notification, and friend status state across components. Centralized state enables consistent UI updates.
 
-5. **Integration with External APIs** — AI-powered content moderation for uploaded images (flagging inappropriate content) and third-party image recognition for auto-suggesting post tags.
+5. **Integration with External APIs** : AI-powered content moderation for uploaded images (flagging inappropriate content) and third-party image recognition for auto-suggesting post tags.
 
 ### Scope and Feasibility
 
@@ -105,44 +106,44 @@ The core application (auth, profiles, friend system, posts, feed) is achievable 
 
 | Member | Primary Responsibilities |
 |--------|------------------------|
-| Qiwen Lin | Backend design, real-time chat, Socket.io integration, notifications |
-| Member 2 | <!-- e.g., Real-time chat, Socket.io integration, notifications --> |
-| Member 3 | <!-- e.g., Frontend UI, feed, profiles, responsive design --> |
-| Member 4 | <!-- e.g., Image processing, cloud storage, content moderation --> |
+| Qiwen Lin | Backend architecture design, database schema design (Prisma + PostgreSQL), real-time chat implementation, Socket.io integration, notification system logic |
+| Irys Zhang | Authentication & authorization (Better Auth), friend system implementation (requests, cap enforcement, access control), API route development, server-side business logic |
+| Weijie Zhu | Frontend UI/UX implementation (Home Feed, Profile, Friend Management), responsive design (mobile + desktop), Tailwind + shadcn/ui components, Redux Toolkit integration for global state |
+| Zhengyang Li | Image upload pipeline (DigitalOcean Spaces integration), server-side image processing (compression, WebP conversion, thumbnails), AI content moderation API integration, performance optimization & deployment configuration |
 
 ### Week-by-Week Plan
 
-**Week 1 — Project Setup and Core Infrastructure**
+**Week 1 : Project Setup and Core Infrastructure**
 - Initialize Next.js project with TypeScript, Tailwind CSS, and Prisma
 - Set up PostgreSQL database and define schema migrations
 - Implement user authentication (registration, login, sessions) with Better Auth
 - Create basic page layout and navigation structure
 
-**Week 2 — Friend System and User Profiles**
+**Week 2 : Friend System and User Profiles**
 - Build user profile pages (avatar upload, bio, display name)
 - Implement friend request system (send, accept, decline) with enforced cap
 - Set up DigitalOcean Spaces for image storage
 - Begin server-side image processing pipeline
 
-**Week 3 — Posts, Feed, and Interactions**
+**Week 3 : Posts, Feed, and Interactions**
 - Implement post creation (text + photo) with image upload
 - Build home feed with friend-only visibility
 - Add like and comment functionality
 - Integrate client-side image cropping
 
-**Week 4 — Real-Time Features**
+**Week 4 : Real-Time Features**
 - Set up Socket.io for WebSocket connections
 - Implement one-on-one real-time chat
 - Build notification system (friend requests, likes, comments, messages)
 - Add online/offline status indicators
 
-**Week 5 — Advanced Features and Polish**
+**Week 5 : Advanced Features and Polish**
 - Integrate Redux Toolkit for global state management
 - Connect AI content moderation API for image uploads
 - Responsive design refinements for mobile
 - Bug fixes, performance optimization, and edge case handling
 
-**Week 6 — Testing, Deployment, and Final Submission**
+**Week 6 : Testing, Deployment, and Final Submission**
 - End-to-end testing of all features
 - Deployment and final demo preparation
 - Documentation and video demo recording
@@ -165,7 +166,7 @@ We chose a Next.js full-stack architecture early on because most team members ha
 TODO: Outline your early thinking about how data would be stored, accessed, and shared across the system.
 -->
 
-Our initial thinking centered on PostgreSQL as the primary data store since the data (users, posts, friendships, messages) is highly relational. We planned to use an ORM (Prisma) to simplify queries and migrations. For client-side state, we initially debated between React Context and Redux Toolkit — we leaned toward Redux because the app has multiple pieces of global state (feed, chat, notifications, online status) that need to stay synchronized across views. Real-time data (chat messages, notifications) would be pushed via WebSockets rather than polling.
+Our initial thinking centered on PostgreSQL as the primary data store since the data (users, posts, friendships, messages) is highly relational. We planned to use an ORM (Prisma) to simplify queries and migrations. For client-side state, we initially debated between React Context and Redux Toolkit, and we leaned toward Redux because the app has multiple pieces of global state (feed, chat, notifications, online status) that need to stay synchronized across views. Real-time data (chat messages, notifications) would be pushed via WebSockets rather than polling.
 
 ### Feature Selection and Scope Decisions
 
@@ -174,7 +175,7 @@ TODO: Explain how your team initially decided on the core features and advanced 
 What tradeoffs did you consider?
 -->
 
-We started by listing features common to social media platforms and then scoped down based on our core concept (small, capped friend groups). We decided that the friend cap was the defining feature and everything else (posts, chat, notifications) should reinforce the intimate-group dynamic. We chose real-time chat over a stories feature because chat felt more essential to close-friend interaction. We considered group chats but deferred them to keep scope manageable — one-on-one messaging is simpler and still serves the core use case. For advanced features, we selected authentication, real-time, and file handling because they were integral to the app, not bolted-on.
+We started by listing features common to social media platforms and then scoped down based on our core concept (small, capped friend groups). We decided that the friend cap was the defining feature and everything else (posts, chat, notifications) should reinforce the intimate-group dynamic. We chose real-time chat over a stories feature because chat felt more essential to close-friend interaction. We considered group chats but deferred them to keep scope manageable, since one-on-one messaging is simpler and still serves the core use case. For advanced features, we selected authentication, real-time, and file handling because they were integral to the app, not bolted-on.
 
 ### Anticipated Challenges
 
@@ -182,7 +183,7 @@ We started by listing features common to social media platforms and then scoped 
 TODO: Identify aspects your team expected to be most challenging before starting implementation.
 -->
 
-We expected real-time functionality to be the biggest challenge because none of us had prior experience with WebSockets or Socket.io in a Next.js context. Integrating Socket.io with Next.js's server architecture (which is serverless-oriented) was a known pain point we anticipated needing to research. Image processing on the server side was another concern — handling upload, compression, and thumbnail generation in a performant way without blocking API routes. Finally, we were concerned about the complexity of friend-based access control: ensuring every query and API route correctly filters data to only show content from accepted friends.
+We expected real-time functionality to be the biggest challenge because none of us had prior experience with WebSockets or Socket.io in a Next.js context. Integrating Socket.io with Next.js's server architecture (which is serverless-oriented) was a known pain point we anticipated needing to research. Image processing on the server side was another concern, as handling upload, compression, and thumbnail generation in a performant way without blocking API routes. Finally, we were concerned about the complexity of friend-based access control: ensuring every query and API route correctly filters data to only show content from accepted friends.
 
 ### Early Collaboration Plan
 
