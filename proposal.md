@@ -116,38 +116,27 @@ We recognize this feature set is broad for a 6-week timeline, so our approach is
 
 ### Week-by-Week Plan
 
-**Week 1 (Mar 2–8): Project Setup, Auth, Profiles, and Friend System**
-- Initialize Next.js project with TypeScript, Tailwind CSS, and Prisma
-- Set up PostgreSQL database and define schema migrations
-- Implement user authentication (registration, login, sessions) with Better Auth
-- Set up Redux Toolkit store with initial slices (auth, UI)
-- Create basic page layout and navigation structure
-- Build user profile pages (avatar upload, bio, display name)
-- Implement friend request system (send, accept, decline) with enforced cap
-- Set up DigitalOcean Spaces for image storage
+The project timeline is compressed into three weeks (Mar 2–27).
 
-**Week 2 (Mar 9–15): Posts, Feed, Image Pipeline, and Real-Time Groundwork**
-- Implement post creation (text + photo) with image upload
-- Build home feed with friend-only visibility
-- Add like and comment functionality
-- Build server-side image processing pipeline (compression, WebP conversion, thumbnail generation)
-- Integrate client-side image cropping
-- Set up Socket.io server and establish basic WebSocket connections (groundwork for Week 3)
-- Add feed and notification Redux slices
+**Week 1 (Mar 2–9): Core App — Auth, Profiles, Friends, Posts, and Feed**
+- Qiwen: Initialize Next.js project with TypeScript, Tailwind CSS, and Prisma; set up PostgreSQL database and define schema migrations
+- Irys: Implement user authentication (registration, login, sessions) with Better Auth; implement friend request system (send, accept, decline) with enforced cap
+- Weijie: Create basic page layout and navigation structure; set up Redux Toolkit store with initial slices (auth, feed, notifications); build user profile pages and home feed UI with like/comment functionality
+- Zhengyang: Configure DigitalOcean Spaces for image storage; implement basic image upload for profile avatars and posts
+- *Goal: by end of Week 1, the core loop works — signup → add friend → create post → see friend's post in feed*
 
-**Week 3 (Mar 16–22): Real-Time Chat, Notifications, and External API**
-- Implement one-on-one real-time chat UI and message persistence
-- Build notification system (friend requests, likes, comments, messages)
-- Add online/offline status indicators
+**Week 2 (Mar 10–17): Real-Time Chat, Notifications, and Image Pipeline**
+- Qiwen: Set up Socket.io server and implement one-on-one real-time chat backend with message persistence; build notification system logic with real-time delivery
+- Weijie: Build chat UI and notification panel frontend; add online/offline status indicators; add chat and notification Redux slices
+- Zhengyang: Build server-side image processing pipeline (compression, WebP conversion, thumbnail generation); integrate client-side image cropping; connect AI content moderation API with async fallback
+- Irys: Harden friend-based access control across all existing routes; build remaining API routes for chat and notification endpoints
 - If Socket.io integration with Next.js proves problematic, switch to standalone server fallback (see risk mitigation)
-- Connect AI content moderation API for image uploads with async fallback
+- *Goal: all five advanced features are functional in MVP form*
 
-**Week 4 (Mar 23–27): Polish, Testing, and Final Submission**
-- Responsive design refinements for mobile (bottom tab bar, touch targets)
-- Performance optimization (image lazy loading, pagination for feed and chat history)
-- Bug fixes and edge case handling across all features
-- End-to-end testing of core user flows (signup → add friend → post → chat)
-- Documentation and video demo recording
+**Week 3 (Mar 18–27): Contingency, Polish, Testing, and Submission**
+- Mar 18–21: Buffer days to finish any Week 2 work that slipped (most likely: real-time notifications or image pipeline edge cases). If Week 2 is on track, begin polish early.
+- Mar 22–25: Weijie: responsive design refinements for mobile (bottom tab bar, touch targets). Zhengyang: performance optimization (image lazy loading, pagination for feed and chat history) and deployment configuration. Qiwen + Irys: bug fixes and edge case handling across all features.
+- Mar 26–27: End-to-end testing of core user flows (signup → add friend → post → chat → receive notification); documentation and video demo recording
 
 ## 4. Initial Independent Reasoning (Before Using AI)
 
