@@ -116,42 +116,37 @@ We recognize this feature set is broad for a 6-week timeline, so our approach is
 
 ### Week-by-Week Plan
 
-**Week 1 : Project Setup and Core Infrastructure**
+**Week 1 (Mar 2–8): Project Setup, Auth, Profiles, and Friend System**
 - Initialize Next.js project with TypeScript, Tailwind CSS, and Prisma
 - Set up PostgreSQL database and define schema migrations
 - Implement user authentication (registration, login, sessions) with Better Auth
+- Set up Redux Toolkit store with initial slices (auth, UI)
 - Create basic page layout and navigation structure
-- Set up Redux Toolkit store with initial slices (auth, UI) so state management is in place from the start
-
-**Week 2 : Friend System, Profiles, and Image Pipeline**
 - Build user profile pages (avatar upload, bio, display name)
 - Implement friend request system (send, accept, decline) with enforced cap
 - Set up DigitalOcean Spaces for image storage
-- Build server-side image processing pipeline (compression, WebP conversion, thumbnail generation)
-- Integrate client-side image cropping for avatar uploads
 
-**Week 3 : Posts, Feed, and Real-Time Groundwork**
+**Week 2 (Mar 9–15): Posts, Feed, Image Pipeline, and Real-Time Groundwork**
 - Implement post creation (text + photo) with image upload
 - Build home feed with friend-only visibility
 - Add like and comment functionality
-- Set up Socket.io server and establish basic WebSocket connections (groundwork for Week 4)
+- Build server-side image processing pipeline (compression, WebP conversion, thumbnail generation)
+- Integrate client-side image cropping
+- Set up Socket.io server and establish basic WebSocket connections (groundwork for Week 3)
 - Add feed and notification Redux slices
 
-**Week 4 : Real-Time Chat and Notifications**
+**Week 3 (Mar 16–22): Real-Time Chat, Notifications, and External API**
 - Implement one-on-one real-time chat UI and message persistence
 - Build notification system (friend requests, likes, comments, messages)
 - Add online/offline status indicators
 - If Socket.io integration with Next.js proves problematic, switch to standalone server fallback (see risk mitigation)
-
-**Week 5 : External API Integration and Responsive Polish**
 - Connect AI content moderation API for image uploads with async fallback
-- Responsive design refinements for mobile (bottom tab bar, touch targets)
-- Bug fixes and edge case handling across all features
-- Performance optimization (image lazy loading, pagination for feed and chat history)
 
-**Week 6 : Testing, Deployment, and Final Submission**
+**Week 4 (Mar 23–27): Polish, Testing, and Final Submission**
+- Responsive design refinements for mobile (bottom tab bar, touch targets)
+- Performance optimization (image lazy loading, pagination for feed and chat history)
+- Bug fixes and edge case handling across all features
 - End-to-end testing of core user flows (signup → add friend → post → chat)
-- Deployment and final demo preparation
 - Documentation and video demo recording
 
 ## 4. Initial Independent Reasoning (Before Using AI)
