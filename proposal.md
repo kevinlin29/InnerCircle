@@ -82,27 +82,30 @@ The layout is fully responsive, adapting from a sidebar navigation on desktop to
 
 ### Advanced Features
 
-We plan to implement the following five advanced features, of which at least two are required by the course:
+We plan to implement the following five advanced features, of which at least two are required by the course. Each goes beyond basic CRUD and involves a distinct technical challenge:
 
-1. **User Authentication and Authorization** : Registration, login, session management, and protected routes using Better Auth. Friend-based access control ensures only friends can view posts and send messages.
+1. **User Authentication and Authorization**: Registration, login, session management, and protected routes using Better Auth. Friend-based access control ensures only friends can view posts and send messages. The challenge is consistently enforcing friend-only visibility across every query and API route, not just the auth flow itself.
 
-2. **Real-Time Functionality** : Live one-on-one chat via Socket.io, real-time notification delivery, and online/offline status indicators. No page refresh is required for new messages or notifications.
+2. **Real-Time Functionality**: Live one-on-one chat via Socket.io, real-time notification delivery, and online/offline status indicators. No page refresh is required for new messages or notifications. The challenge is managing persistent WebSocket connections within Next.js's serverless-oriented architecture, which doesn't natively support long-lived connections.
 
-3. **File Handling and Processing** : Server-side image compression, thumbnail generation, and format conversion. Client-side image cropping before upload. Support for multiple image formats.
+3. **File Handling and Processing**: Server-side image compression, thumbnail generation, and format conversion. Client-side image cropping before upload. Support for multiple image formats. The challenge is coordinating an async pipeline (upload → validate → compress → generate thumbnail → store) without blocking API routes or consuming excessive memory.
 
-4. **Advanced State Management** : Redux Toolkit for managing feed, chat, notification, and friend status state across components. Centralized state enables consistent UI updates.
+4. **Advanced State Management**: Redux Toolkit for managing feed, chat, notification, and friend status state across components. Centralized state enables consistent UI updates. The challenge is keeping state consistent across multiple real-time data sources (WebSocket events, API responses, optimistic updates) without race conditions or stale data.
 
-5. **Integration with External APIs** : AI-powered content moderation for uploaded images (flagging inappropriate content) and third-party image recognition for auto-suggesting post tags.
+5. **Integration with External APIs**: AI-powered content moderation for uploaded images (flagging inappropriate content before they appear in friends' feeds). The challenge is handling async external calls with unpredictable latency and designing graceful degradation when the API is unavailable, so the core upload flow is never blocked by a third-party failure.
 
 ### Scope and Feasibility
 
-The core application (auth, profiles, friend system, posts, feed) is achievable within the first few weeks using well-documented technologies (Next.js, Prisma, PostgreSQL). Real-time chat and notifications add complexity but Socket.io is a mature library with strong Next.js integration patterns. The friend cap mechanic is a simple database constraint. Image processing and cloud storage are well-supported by existing libraries (Sharp for image processing, AWS SDK for S3-compatible storage). The scope is intentionally bounded: we are building a focused, single-purpose app rather than a feature-rich general social platform, which keeps the project feasible within the course timeline.
+We recognize this feature set is broad for a 6-week timeline, so our approach is to build MVP versions of each feature first before polishing any single one. The core loop (auth → add friends → create post → see feed) is the priority; chat, notifications, and image processing are secondary and will be scoped down if needed (e.g., notifications could fall back to polling instead of WebSockets, image processing could skip thumbnail generation). The friend cap mechanic is a simple database constraint. The technologies are all well-documented (Next.js, Prisma, PostgreSQL, Sharp, AWS SDK), and we are intentionally building a focused, single-purpose app rather than a general social platform.
+
+**Risk mitigation**:
+
+- **Socket.io + Next.js integration risk**: Next.js is serverless-oriented, and persistent WebSocket connections may not work cleanly with the default deployment model. If Socket.io integration proves too difficult within the Next.js server, our fallback is to run a lightweight standalone Socket.io server alongside the Next.js app and proxy connections to it. This isolates the real-time concern without rearchitecting the rest of the application.
+- **External API availability/cost risk**: The AI content moderation API could become unavailable, rate-limited, or unexpectedly expensive. We will implement the moderation call as a non-blocking step: uploads succeed immediately and are visible to friends, while moderation runs asynchronously. If the API is down or returns an error, posts are flagged for manual review rather than rejected outright, so the core user experience is never blocked by a third-party dependency.
 
 ## 3. Tentative Plan
 
 ### Team Responsibilities
-
-<!-- TODO: Fill in actual member names and responsibilities -->
 
 | Member | Primary Responsibilities |
 |--------|------------------------|
@@ -118,33 +121,36 @@ The core application (auth, profiles, friend system, posts, feed) is achievable 
 - Set up PostgreSQL database and define schema migrations
 - Implement user authentication (registration, login, sessions) with Better Auth
 - Create basic page layout and navigation structure
+- Set up Redux Toolkit store with initial slices (auth, UI) so state management is in place from the start
 
-**Week 2 : Friend System and User Profiles**
+**Week 2 : Friend System, Profiles, and Image Pipeline**
 - Build user profile pages (avatar upload, bio, display name)
 - Implement friend request system (send, accept, decline) with enforced cap
 - Set up DigitalOcean Spaces for image storage
-- Begin server-side image processing pipeline
+- Build server-side image processing pipeline (compression, WebP conversion, thumbnail generation)
+- Integrate client-side image cropping for avatar uploads
 
-**Week 3 : Posts, Feed, and Interactions**
+**Week 3 : Posts, Feed, and Real-Time Groundwork**
 - Implement post creation (text + photo) with image upload
 - Build home feed with friend-only visibility
 - Add like and comment functionality
-- Integrate client-side image cropping
+- Set up Socket.io server and establish basic WebSocket connections (groundwork for Week 4)
+- Add feed and notification Redux slices
 
-**Week 4 : Real-Time Features**
-- Set up Socket.io for WebSocket connections
-- Implement one-on-one real-time chat
+**Week 4 : Real-Time Chat and Notifications**
+- Implement one-on-one real-time chat UI and message persistence
 - Build notification system (friend requests, likes, comments, messages)
 - Add online/offline status indicators
+- If Socket.io integration with Next.js proves problematic, switch to standalone server fallback (see risk mitigation)
 
-**Week 5 : Advanced Features and Polish**
-- Integrate Redux Toolkit for global state management
-- Connect AI content moderation API for image uploads
-- Responsive design refinements for mobile
-- Bug fixes, performance optimization, and edge case handling
+**Week 5 : External API Integration and Responsive Polish**
+- Connect AI content moderation API for image uploads with async fallback
+- Responsive design refinements for mobile (bottom tab bar, touch targets)
+- Bug fixes and edge case handling across all features
+- Performance optimization (image lazy loading, pagination for feed and chat history)
 
 **Week 6 : Testing, Deployment, and Final Submission**
-- End-to-end testing of all features
+- End-to-end testing of core user flows (signup → add friend → post → chat)
 - Deployment and final demo preparation
 - Documentation and video demo recording
 
@@ -152,61 +158,34 @@ The core application (auth, profiles, friend system, posts, feed) is achievable 
 
 ### Application Structure and Architecture
 
-<!--
-TODO: Describe your team's initial decisions about the overall structure of the application
-(e.g., Next.js full-stack vs. separate frontend and backend).
-Explain why this structure felt appropriate for your project goals and team skills.
--->
-
-We chose a Next.js full-stack architecture early on because most team members had prior experience with React but limited backend experience. Next.js's built-in API routes and server actions meant we could avoid setting up a separate Express.js server, reducing the operational complexity of managing two codebases. The App Router's server components also offered a natural way to handle data fetching close to the database without building a full REST API layer first.
+Honestly, the main reason we went with Next.js was that three of us had used React before but nobody was confident setting up a standalone backend from scratch. We briefly considered a React + Express split, but the idea of maintaining two repos, dealing with CORS, and deploying two services felt like a lot of overhead for a course project. Next.js API routes seemed like a shortcut to having a backend without actually "building a backend." We didn't fully understand the App Router vs. Pages Router tradeoff at first—we picked App Router mostly because it was the newer option and we figured we should learn it.
 
 ### Data and State Design
 
-<!--
-TODO: Outline your early thinking about how data would be stored, accessed, and shared across the system.
--->
-
-Our initial thinking centered on PostgreSQL as the primary data store since the data (users, posts, friendships, messages) is highly relational. We planned to use an ORM (Prisma) to simplify queries and migrations. For client-side state, we initially debated between React Context and Redux Toolkit, and we leaned toward Redux because the app has multiple pieces of global state (feed, chat, notifications, online status) that need to stay synchronized across views. Real-time data (chat messages, notifications) would be pushed via WebSockets rather than polling.
+We knew we wanted PostgreSQL because the data is clearly relational (users have friends, posts belong to users, etc.), and a couple of us had used it in a databases course. We picked Prisma as the ORM mainly because it came up in every Next.js tutorial we found. For client-side state, we went back and forth between React Context and Redux—Context seemed simpler, but we were worried it would get messy once we had chat messages, notifications, and feed data all floating around. We didn't have a strong technical argument for Redux at this point, more of a gut feeling that we'd regret Context later. For real-time data, we knew we wanted WebSockets over polling, but hadn't figured out exactly how that would integrate with Next.js yet.
 
 ### Feature Selection and Scope Decisions
 
-<!--
-TODO: Explain how your team initially decided on the core features and advanced features.
-What tradeoffs did you consider?
--->
-
-We started by listing features common to social media platforms and then scoped down based on our core concept (small, capped friend groups). We decided that the friend cap was the defining feature and everything else (posts, chat, notifications) should reinforce the intimate-group dynamic. We chose real-time chat over a stories feature because chat felt more essential to close-friend interaction. We considered group chats but deferred them to keep scope manageable, since one-on-one messaging is simpler and still serves the core use case. For advanced features, we selected authentication, real-time, and file handling because they were integral to the app, not bolted-on.
+We started by brainstorming every social media feature we could think of—stories, reels, group chats, reactions, polls—and then tried to cut anything that didn't directly support the "small circle" idea. The friend cap was always the core concept, but we debated for a while whether to include group chats or just one-on-one messaging. Group chats would make sense for a small-circle platform, but we were worried about the added complexity (group creation, member management, typing indicators for multiple people) and decided to keep it to DMs for now. We also almost included a stories feature but cut it because it felt like scope creep and none of us were sure how to handle ephemeral content deletion cleanly. The advanced features we picked (auth, real-time, file handling) were mostly just things the app needed to work—we didn't want to bolt on something unrelated just to check a box.
 
 ### Anticipated Challenges
 
-<!--
-TODO: Identify aspects your team expected to be most challenging before starting implementation.
--->
-
-We expected real-time functionality to be the biggest challenge because none of us had prior experience with WebSockets or Socket.io in a Next.js context. Integrating Socket.io with Next.js's server architecture (which is serverless-oriented) was a known pain point we anticipated needing to research. Image processing on the server side was another concern, as handling upload, compression, and thumbnail generation in a performant way without blocking API routes. Finally, we were concerned about the complexity of friend-based access control: ensuring every query and API route correctly filters data to only show content from accepted friends.
+Real-time chat scared us the most. None of us had used WebSockets before, and from what we read online, Socket.io and Next.js don't play together that naturally since Next.js leans serverless and WebSockets need persistent connections. We weren't sure if we'd need a separate server just for chat or if there was a way to make it work within Next.js. Image processing was another unknown—we knew libraries like Sharp existed, but we hadn't actually done server-side image manipulation before and were worried about it being slow or memory-heavy. The friend-based access control also felt like it could get tricky: it's easy to forget a check somewhere and accidentally leak a post to a non-friend, and we didn't have a clear pattern in mind for how to enforce it consistently across every route.
 
 ### Early Collaboration Plan
 
-<!--
-TODO: Describe how responsibilities were initially expected to be divided and how the team planned to coordinate.
--->
-
-We planned to divide work by feature area rather than by frontend/backend, so each member would own a vertical slice of the application (e.g., one person handles the entire chat feature from database to UI). This reduces coordination overhead and gives each member full-stack experience. We planned to coordinate via a shared GitHub repository with feature branches and pull requests for code review. Weekly sync meetings would be used to align on progress and resolve blockers.
+We initially talked about dividing work by feature area (vertical slices), where each person would own an entire feature from database to UI. But when we actually tried to assign work, it made more sense to split by skill and comfort level — one person on frontend, one on backend architecture, one on auth and API routes, one on the image/storage pipeline. We figured this would let each person go deeper in their area instead of everyone context-switching between frontend and backend constantly. We planned to coordinate via a shared GitHub repository with feature branches and pull requests. Weekly syncs would keep everyone aligned and catch integration issues early, since the horizontal split means we'd need to be more deliberate about connecting each other's work.
 
 ## 5. AI Assistance Disclosure
 
 ### Which parts of the proposal were developed without AI assistance?
 
-<!--
-TODO: List the sections or ideas that were entirely your team's original work.
--->
-
-The core concept of a friend-capped social platform, the motivation section, and the feature selection decisions were developed entirely through team discussion without AI assistance. The weekly plan breakdown and team responsibility division were also done independently based on our assessment of each member's skills.
+The core concept of a friend-capped social platform, the motivation section, and the feature selection decisions all came from team discussions—those sections reflect what we actually care about building and why. The weekly plan breakdown and team responsibility division were also done independently, based on what each person felt comfortable owning.
 
 ### If AI was used, what specific tasks or drafts did it help with?
 
-AI tools (Claude) were used to define detailed workflows of the application, such as the image upload and processing pipeline and the friend request flow. AI also helped fill in technical detail for the advanced features section (e.g., specifying exact fields in the database schema and elaborating on file handling steps). Additionally, AI assisted with restructuring and formatting the Markdown document for cleaner presentation.
+We used Claude to flesh out technical details that we had vague ideas about but couldn't articulate precisely—for example, we knew we wanted "image upload and compression" but Claude helped us think through the specific pipeline (client-side crop → upload → server-side compress → generate thumbnail → store in S3). Similarly, the database schema fields were partly AI-generated: we had the tables in mind but Claude suggested specific columns like `thumbnailUrl` and `orderIndex` that we hadn't considered. Claude also helped restructure the Markdown document, which is worth noting because the polished formatting doesn't reflect how messy our original draft was.
 
 ### AI-influenced idea: explanation and team evaluation
 
-Claude suggested including AI-powered content moderation as an advanced feature to satisfy the "External API Integration" course requirement. Our team discussed whether content moderation was truly necessary for a platform designed around small, trusted friend groups where users already know each other. We decided to keep it because it still serves as a safety net for inappropriate content, and scoping it to image uploads only (rather than text) keeps API costs manageable while meeting the requirement.
+Claude suggested including AI-powered content moderation as an advanced feature to satisfy the "External API Integration" course requirement. This was a case where the AI pushed us toward something we probably wouldn't have thought of on our own. We debated it honestly—content moderation feels a bit unnecessary for a platform where you only share with 20-30 close friends who you presumably trust. But we decided to keep it for two reasons: it genuinely satisfies the external API requirement without feeling completely forced, and it gave us a chance to think about what happens when a third-party service fails (which led to the fallback design in our risk mitigation section). In retrospect, the AI was most useful for filling in implementation details we lacked the experience to specify, but the high-level decisions about what to build and why still came from us.
