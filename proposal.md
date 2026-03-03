@@ -20,34 +20,45 @@ Research consistently shows that people maintain meaningful relationships with o
 
 **Existing solutions and their limitations**: Platforms like BeReal attempt to encourage authenticity but still operate on an open follower model with no cap on connections. Close Friends lists on Instagram are an afterthought rather than a core design principle. Group chats on messaging apps (WhatsApp, iMessage) lack the social feed and profile features that make social media engaging. None of these solutions structurally enforce small, meaningful networks.
 
-**InnerCircle** addresses this gap by enforcing a limited friend count (approximately 20-30 connections max, configurable), ensuring that every post, message, and interaction happens within a small, trusted group. The platform is designed for users who want a social media experience that feels personal rather than performative.
+**InnerCircle** addresses this gap by enforcing a **Finite Social Graph** (approximately 20–30 connections max), ensuring that every post, message, and interaction happens within a small, trusted group. The platform is designed for users who want a social media experience that feels personal rather than performative.
 
-**Target users**: Young adults and students who want to stay connected with close friends through photo sharing and real-time messaging, without the noise and pressure of large-scale social networks.
+**Target Users:** Young adults and students who want to stay connected with close friends through geospatial photo sharing and real-time messaging, without the noise and pressure of large-scale social networks.
+
+---
 
 ## 2. Objective and Key Features
 
 ### Objectives
 
-- Build a full-stack social media web application that prioritizes intimate, small-group sharing over mass broadcasting
-- Implement a friend system with an enforced cap on connections to encourage meaningful relationships
-- Provide real-time chat and notifications so users can interact with friends instantly
-- Support photo and text-based posts visible only to accepted friends
-- Deliver a responsive, polished user experience across desktop and mobile devices
+- **Finite Graph Architecture:** Implement a friend system with an enforced architectural cap on connections to encourage meaningful relationships.
+- **Geospatial Visualization:** Instead of a traditional infinite feed, provide a **3D Interactive Globe** where posts are mapped to their physical locations, allowing users to explore memories spatially.
+- **Real-Time Interaction:** Deliver instant messaging and notifications via WebSockets.
+- **Full-Stack Performance:** Deliver a responsive user experience using **Next.js Server Components** and Server Actions.
 
 ### Technical Implementation Approach
 
 We will use a **Next.js Full-Stack** architecture (App Router with Server Components, API Routes, and Server Actions). This approach keeps the frontend and backend in a single codebase, simplifying deployment and enabling server-side rendering for performance. TypeScript is used throughout for type safety.
 
-**Tech stack summary**:
+---
 
-- **Frontend**: Next.js (App Router), TypeScript, Tailwind CSS, shadcn/ui
-- **Backend**: Next.js API Routes and Server Actions
-- **Database**: PostgreSQL (via Prisma ORM)
-- **Authentication**: Better Auth (session-based)
-- **Real-Time**: Socket.io for live chat and notifications
-- **Cloud Storage**: DigitalOcean Spaces (S3-compatible) for user-uploaded photos
-- **State Management**: Redux Toolkit for global client-side state
-- **External APIs**: Cloud-based AI content moderation service
+## 3. Technical Stack
+
+### Architecture
+* **Framework:** **Next.js 14+** (App Router, Server Components, Server Actions).
+* **Pattern:** Monorepo / Full-Stack Application.
+
+### Frontend
+* **Core:** React, TypeScript.
+* **Styling:** Tailwind CSS, shadcn/ui.
+* **Visualization:** **`react-globe.gl` / Three.js** (For the 3D Earth view).
+* **State Management:** Redux Toolkit (Client-side global state).
+
+### Backend
+* **API:** Next.js API Routes & Server Actions.
+* **Database:** **PostgreSQL** (Managed via Supabase or Neon, using Prisma ORM).
+* **Real-Time:** **Socket.io** (Hosted on a separate Node.js process or Vercel KV).
+* **Auth:** **Better Auth** (Session management & RBAC).
+* **Storage:** DigitalOcean Spaces / AWS S3 (For user-uploaded media).
 
 ### Database Schema and Relationships
 
@@ -55,23 +66,49 @@ The core database schema includes the following tables and relationships:
 
 - **User**: id, email, passwordHash, displayName, bio, avatarUrl, friendCapLimit, createdAt
 - **Friendship**: id, requesterId → User, addresseeId → User, status (pending/accepted/declined), createdAt
-- **Post**: id, authorId → User, textContent, createdAt
+- **Post**: id, authorId → User, textContent, lat, lng, createdAt
 - **PostImage**: id, postId → Post, imageUrl, thumbnailUrl, orderIndex
 - **Comment**: id, postId → Post, authorId → User, content, createdAt
 - **Like**: id, postId → Post, userId → User, createdAt (unique constraint on postId + userId)
 - **Message**: id, senderId → User, receiverId → User, content, readAt, createdAt
 - **Notification**: id, recipientId → User, type (friend_request/new_post/like/comment/message), referenceId, read, createdAt
 
-Key relationships: A User has many Posts, Comments, and Likes. Friendships are a self-referencing many-to-many relationship on User. Posts have many PostImages (one-to-many), Comments, and Likes. Messages are a one-to-one chat model between two Users.
+Key relationships: A User has many Posts, Comments, and Likes. Friendships are a self-referencing many-to-many relationship on User. Posts have many PostImages (one-to-many), Comments, and Likes. Messages are a one-to-one chat model between two Users. Posts include geospatial coordinates (`lat`, `lng`) for Globe View mapping.
 
-### File Storage Requirements
+---
 
-User-uploaded images (profile avatars, post photos) are stored in DigitalOcean Spaces, an S3-compatible object storage service. Images are processed server-side before storage: compressed, resized, and converted to WebP format. Thumbnails are auto-generated for feed previews. A client-side cropping tool allows users to crop and resize images before upload to reduce bandwidth. Files are organized in buckets by type (`avatars/`, `posts/`), with unique filenames to prevent collisions.
+## 4. Key Features & Implementation
+
+### 4.1 Finite-Graph Access Control (The "Friend Cap")
+Unlike standard "Following" models, InnerCircle enforces a strict limit on connections.
+* **Logic:** Users effectively have a "quota" for friends. To add a new friend once at the cap, an existing connection must be removed.
+* **Implementation:** Database constraints and Server Action middleware validate the friend count before processing `FriendRequest` transactions. Friend-based access control ensures only friends can view posts and send messages. The challenge is consistently enforcing friend-only visibility across every query and API route, not just the auth flow itself.
+
+### 4.2 Geospatial Memory Mapping (The "Globe View")
+A unique feature differentiating InnerCircle from generic feeds.
+* **Functionality:** Upon login, users see a rotatable 3D Earth. Friends' posts appear as "bubbles" or markers at their specific coordinates (`lat`, `lng`).
+* **Interaction:** Users can drag the globe, zoom in on a region (e.g., "Toronto"), and click a marker to open a detailed side-drawer view of the post.
+* **Tech:** Uses WebGL raycasting to detect interactions and fetches post metadata based on the viewport bounding box to optimize rendering performance.
+
+### 4.3 Real-Time Communication
+* **Chat:** One-on-one messaging delivered instantly via Socket.io.
+* **Notifications:** Real-time alerts for friend requests, new posts (bubbles appearing on the globe), likes, and comments.
+* **Implementation:** Socket.io server handles the WebSocket handshake, syncing state with Redux Toolkit on the client. Online/offline status indicators are included. The challenge is managing persistent WebSocket connections within Next.js's serverless-oriented architecture, which doesn't natively support long-lived connections.
+
+### 4.4 Media Processing Pipeline
+* **Upload:** Client-side cropping and resizing before upload to save bandwidth.
+* **Processing:** Server-side validation, compression, WebP format conversion, and thumbnail generation (using `sharp` or similar libraries) before storage in S3/DigitalOcean Spaces.
+* **Safety:** Integration with external AI APIs for content moderation (e.g., filtering inappropriate images). The moderation call is non-blocking: uploads succeed immediately while moderation runs asynchronously with graceful fallback.
+
+### 4.5 Advanced State Management
+* Redux Toolkit for managing feed, chat, notification, and friend status state across components.
+* Centralized state enables consistent UI updates across multiple real-time data sources (WebSocket events, API responses, optimistic updates) without race conditions or stale data.
 
 ### User Interface and Experience Design
 
 The UI follows a clean, minimal aesthetic using Tailwind CSS and shadcn/ui components. Key views include:
 
+- **Globe View (Home)**: 3D interactive Earth with friends' posts mapped as location markers
 - **Home Feed**: Chronological list of friend posts with like/comment actions
 - **Profile Page**: User avatar, bio, friend list, and personal post history
 - **Chat**: Real-time one-on-one messaging interface with message history
@@ -80,30 +117,51 @@ The UI follows a clean, minimal aesthetic using Tailwind CSS and shadcn/ui compo
 
 The layout is fully responsive, adapting from a sidebar navigation on desktop to a bottom tab bar on mobile.
 
-### Advanced Features
-
-We plan to implement the following five advanced features, of which at least two are required by the course. Each goes beyond basic CRUD and involves a distinct technical challenge:
-
-1. **User Authentication and Authorization**: Registration, login, session management, and protected routes using Better Auth. Friend-based access control ensures only friends can view posts and send messages. The challenge is consistently enforcing friend-only visibility across every query and API route, not just the auth flow itself.
-
-2. **Real-Time Functionality**: Live one-on-one chat via Socket.io, real-time notification delivery, and online/offline status indicators. No page refresh is required for new messages or notifications. The challenge is managing persistent WebSocket connections within Next.js's serverless-oriented architecture, which doesn't natively support long-lived connections.
-
-3. **File Handling and Processing**: Server-side image compression, thumbnail generation, and format conversion. Client-side image cropping before upload. Support for multiple image formats. The challenge is coordinating an async pipeline (upload → validate → compress → generate thumbnail → store) without blocking API routes or consuming excessive memory.
-
-4. **Advanced State Management**: Redux Toolkit for managing feed, chat, notification, and friend status state across components. Centralized state enables consistent UI updates. The challenge is keeping state consistent across multiple real-time data sources (WebSocket events, API responses, optimistic updates) without race conditions or stale data.
-
-5. **Integration with External APIs**: AI-powered content moderation for uploaded images (flagging inappropriate content before they appear in friends' feeds). The challenge is handling async external calls with unpredictable latency and designing graceful degradation when the API is unavailable, so the core upload flow is never blocked by a third-party failure.
-
 ### Scope and Feasibility
 
-We recognize this feature set is broad for a 6-week timeline, so our approach is to build MVP versions of each feature first before polishing any single one. The core loop (auth → add friends → create post → see feed) is the priority; chat, notifications, and image processing are secondary and will be scoped down if needed (e.g., notifications could fall back to polling instead of WebSockets, image processing could skip thumbnail generation). The friend cap mechanic is a simple database constraint. The technologies are all well-documented (Next.js, Prisma, PostgreSQL, Sharp, AWS SDK), and we are intentionally building a focused, single-purpose app rather than a general social platform.
+We recognize this feature set is broad for a 6-week timeline, so our approach is to build MVP versions of each feature first before polishing any single one. The core loop (auth → add friends → create post → see feed on Globe) is the priority; chat, notifications, and image processing are secondary and will be scoped down if needed (e.g., notifications could fall back to polling instead of WebSockets, image processing could skip thumbnail generation). The friend cap mechanic is a simple database constraint. The technologies are all well-documented (Next.js, Prisma, PostgreSQL, Sharp, AWS SDK, react-globe.gl), and we are intentionally building a focused, single-purpose app rather than a general social platform.
 
 **Risk mitigation**:
 
 - **Socket.io + Next.js integration risk**: Next.js is serverless-oriented, and persistent WebSocket connections may not work cleanly with the default deployment model. If Socket.io integration proves too difficult within the Next.js server, our fallback is to run a lightweight standalone Socket.io server alongside the Next.js app and proxy connections to it. This isolates the real-time concern without rearchitecting the rest of the application.
 - **External API availability/cost risk**: The AI content moderation API could become unavailable, rate-limited, or unexpectedly expensive. We will implement the moderation call as a non-blocking step: uploads succeed immediately and are visible to friends, while moderation runs asynchronously. If the API is down or returns an error, posts are flagged for manual review rather than rejected outright, so the core user experience is never blocked by a third-party dependency.
 
-## 3. Tentative Plan
+---
+
+## 5. User Guide (User Flow)
+
+1.  **Onboarding:** Register via Email/Password. Set up profile avatar.
+2.  **Building the Circle:** Send friend requests. Once accepted, the friend's location-tagged posts appear on your Globe.
+3.  **Posting:**
+    * Click "New Post".
+    * Upload Photo/Video.
+    * The app automatically detects location (or allows manual selection).
+    * Post is pinned to the Globe.
+4.  **Exploration:** Spin the Earth to see what friends are doing in different cities. Click a bubble to comment or like.
+5.  **Messaging:** Click a friend's avatar to start a real-time chat.
+
+---
+
+## 6. Development Guide
+
+### Prerequisites
+* Node.js (v18+)
+* PostgreSQL Database URL
+* Cloud Storage Keys (AWS/DigitalOcean)
+
+### Environment Setup
+Create a `.env.local` file:
+```bash
+DATABASE_URL="postgresql://user:password@localhost:5432/innercircle"
+NEXT_PUBLIC_SOCKET_URL="http://localhost:3001"
+S3_ACCESS_KEY="..."
+S3_SECRET_KEY="..."
+BETTER_AUTH_SECRET="..."
+```
+
+---
+
+## 7. Tentative Plan
 
 ### Team Responsibilities
 
@@ -111,7 +169,7 @@ We recognize this feature set is broad for a 6-week timeline, so our approach is
 |--------|------------------------|
 | Qiwen Lin | Backend architecture design, database schema design (Prisma + PostgreSQL), real-time chat implementation, Socket.io integration, notification system logic |
 | Irys Zhang | Authentication & authorization (Better Auth), friend system implementation (requests, cap enforcement, access control), API route development, server-side business logic |
-| Weijie Zhu | Frontend UI/UX implementation (Home Feed, Profile, Friend Management), responsive design (mobile + desktop), Tailwind + shadcn/ui components, Redux Toolkit integration for global state |
+| Weijie Zhu | Frontend UI/UX implementation (Globe View, Home Feed, Profile, Friend Management), responsive design (mobile + desktop), Tailwind + shadcn/ui components, Redux Toolkit integration for global state |
 | Zhengyang Li | Image upload pipeline (DigitalOcean Spaces integration), server-side image processing (compression, WebP conversion, thumbnails), AI content moderation API integration, performance optimization & deployment configuration |
 
 ### Week-by-Week Plan
@@ -125,20 +183,22 @@ The project timeline is compressed into three weeks (Mar 2–27).
 - Zhengyang: Configure DigitalOcean Spaces for image storage; implement basic image upload for profile avatars and posts
 - *Goal: by end of Week 1, the core loop works — signup → add friend → create post → see friend's post in feed*
 
-**Week 2 (Mar 10–17): Real-Time Chat, Notifications, and Image Pipeline**
+**Week 2 (Mar 10–17): Real-Time Chat, Notifications, Globe View, and Image Pipeline**
 - Qiwen: Set up Socket.io server and implement one-on-one real-time chat backend with message persistence; build notification system logic with real-time delivery
-- Weijie: Build chat UI and notification panel frontend; add online/offline status indicators; add chat and notification Redux slices
+- Weijie: Build chat UI and notification panel frontend; implement Globe View with react-globe.gl / Three.js; add online/offline status indicators; add chat and notification Redux slices
 - Zhengyang: Build server-side image processing pipeline (compression, WebP conversion, thumbnail generation); integrate client-side image cropping; connect AI content moderation API with async fallback
 - Irys: Harden friend-based access control across all existing routes; build remaining API routes for chat and notification endpoints
 - If Socket.io integration with Next.js proves problematic, switch to standalone server fallback (see risk mitigation)
-- *Goal: all five advanced features are functional in MVP form*
+- *Goal: all advanced features are functional in MVP form, Globe View shows posts geospatially*
 
 **Week 3 (Mar 18–27): Contingency, Polish, Testing, and Submission**
-- Mar 18–21: Buffer days to finish any Week 2 work that slipped (most likely: real-time notifications or image pipeline edge cases). If Week 2 is on track, begin polish early.
+- Mar 18–21: Buffer days to finish any Week 2 work that slipped (most likely: real-time notifications, Globe View interactions, or image pipeline edge cases). If Week 2 is on track, begin polish early.
 - Mar 22–25: Weijie: responsive design refinements for mobile (bottom tab bar, touch targets). Zhengyang: performance optimization (image lazy loading, pagination for feed and chat history) and deployment configuration. Qiwen + Irys: bug fixes and edge case handling across all features.
-- Mar 26–27: End-to-end testing of core user flows (signup → add friend → post → chat → receive notification); documentation and video demo recording
+- Mar 26–27: End-to-end testing of core user flows (signup → add friend → post → explore Globe → chat → receive notification); documentation and video demo recording
 
-## 4. Initial Independent Reasoning (Before Using AI)
+---
+
+## 8. Initial Independent Reasoning (Before Using AI)
 
 ### Application Structure and Architecture
 
@@ -160,7 +220,9 @@ Real-time chat scared us the most. None of us had used WebSockets before, and fr
 
 We initially talked about dividing work by feature area (vertical slices), where each person would own an entire feature from database to UI. But when we actually tried to assign work, it made more sense to split by skill and comfort level — one person on frontend, one on backend architecture, one on auth and API routes, one on the image/storage pipeline. We figured this would let each person go deeper in their area instead of everyone context-switching between frontend and backend constantly. We planned to coordinate via a shared GitHub repository with feature branches and pull requests. Weekly syncs would keep everyone aligned and catch integration issues early, since the horizontal split means we'd need to be more deliberate about connecting each other's work.
 
-## 5. AI Assistance Disclosure
+---
+
+## 9. AI Assistance Disclosure
 
 ### Which parts of the proposal were developed without AI assistance?
 
