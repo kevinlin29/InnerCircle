@@ -1,0 +1,15 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "outDir": "./dist",
+    "noEmit": false,
+    "esModuleInterop": true,
+    "paths": {
+      "@/*": ["./src/*"],
+      "@/generated/*": ["./src/generated/*"]
+    }
+  },
+  "include": ["server.ts", "src/lib/socket-server.ts", "src/lib/prisma.ts"]
+}
