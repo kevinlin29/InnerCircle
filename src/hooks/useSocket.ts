@@ -11,18 +11,27 @@ interface SocketNotification {
   createdAt: string;
 }
 
+export interface PostUpdateEvent {
+  postId: string;
+  likeCount: number;
+  commentCount: number;
+  liked?: boolean;
+  actorId?: string;
+}
+
 interface UseSocketOptions {
   onNotification?: (notification: SocketNotification) => void;
   onNewPost?: () => void;
+  onPostUpdate?: (data: PostUpdateEvent) => void;
 }
 
 /**
  * Manages Socket.io connection lifecycle for authenticated pages.
  * Automatically connects on mount and disconnects on unmount.
  */
-export function useSocket({ onNotification, onNewPost }: UseSocketOptions = {}) {
-  const callbacksRef = useRef({ onNotification, onNewPost });
-  callbacksRef.current = { onNotification, onNewPost };
+export function useSocket({ onNotification, onNewPost, onPostUpdate }: UseSocketOptions = {}) {
+  const callbacksRef = useRef({ onNotification, onNewPost, onPostUpdate });
+  callbacksRef.current = { onNotification, onNewPost, onPostUpdate };
 
   useEffect(() => {
     let mounted = true;
@@ -39,6 +48,10 @@ export function useSocket({ onNotification, onNewPost }: UseSocketOptions = {}) 
             callbacksRef.current.onNewPost?.();
           }
         });
+
+        socket.on("post:updated", (data: PostUpdateEvent) => {
+          callbacksRef.current.onPostUpdate?.(data);
+        });
       } catch {
         // Session may not be ready yet — silently ignore
       }
@@ -51,6 +64,7 @@ export function useSocket({ onNotification, onNewPost }: UseSocketOptions = {}) 
       const socket = getSocket();
       if (socket) {
         socket.off("notification:new");
+        socket.off("post:updated");
       }
       disconnectSocket();
     };

@@ -4,10 +4,22 @@ import { z } from "zod";
 import { prisma } from "./prisma";
 import { getFriendIds } from "./friends";
 
-let io: SocketServer | null = null;
+// Share io and userSockets via globalThis so that both the custom server
+// (native Node) and Next.js API routes (webpack-bundled) access the SAME instance.
+const g = globalThis as unknown as {
+  __socketIO?: SocketServer | null;
+  __userSockets?: Map<string, Set<string>>;
+};
 
-// Map userId → Set of socket IDs (user can have multiple tabs)
-const userSockets = new Map<string, Set<string>>();
+if (!g.__userSockets) g.__userSockets = new Map();
+
+function getIORef(): SocketServer | null {
+  return g.__socketIO ?? null;
+}
+
+function getUserSockets(): Map<string, Set<string>> {
+  return g.__userSockets!;
+}
 
 // Zod schemas for input validation
 const ChatMessageSchema = z.object({
@@ -25,13 +37,15 @@ const ChatTypingSchema = z.object({
 });
 
 export function getIO(): SocketServer {
+  const io = getIORef();
   if (!io) throw new Error("Socket.io not initialized");
   return io;
 }
 
 /** Emit an event to a specific user (all their connected sockets) */
 export function emitToUser(userId: string, event: string, data: unknown) {
-  const sockets = userSockets.get(userId);
+  const io = getIORef();
+  const sockets = getUserSockets().get(userId);
   if (sockets && io) {
     for (const socketId of sockets) {
       io.to(socketId).emit(event, data);
@@ -50,17 +64,31 @@ export function emitNotification(userId: string, notification: {
   emitToUser(userId, "notification:new", notification);
 }
 
+/** Broadcast post data update to all connected clients viewing this post */
+export function emitPostUpdate(postId: string, data: {
+  likeCount: number;
+  commentCount: number;
+  liked?: boolean;
+  actorId?: string;
+}) {
+  const io = getIORef();
+  if (io) {
+    io.emit("post:updated", { postId, ...data });
+  }
+}
+
 /** Check if a user is currently online */
 export function isUserOnline(userId: string): boolean {
-  const sockets = userSockets.get(userId);
+  const sockets = getUserSockets().get(userId);
   return !!sockets && sockets.size > 0;
 }
 
 export function initSocketServer(httpServer: HttpServer) {
-  io = new SocketServer(httpServer, {
+  const io = new SocketServer(httpServer, {
     cors: { origin: "*", methods: ["GET", "POST"] },
     path: "/api/socketio",
   });
+  g.__socketIO = io;
 
   // Authentication middleware — verify session token server-side
   io.use(async (socket, next) => {
@@ -93,6 +121,7 @@ export function initSocketServer(httpServer: HttpServer) {
     const userName = socket.data.userName as string;
 
     // Track user connection
+    const userSockets = getUserSockets();
     if (!userSockets.has(userId)) {
       userSockets.set(userId, new Set());
     }
@@ -228,11 +257,12 @@ export function initSocketServer(httpServer: HttpServer) {
 
     // Handle disconnect — only notify friends
     socket.on("disconnect", () => {
-      const sockets = userSockets.get(userId);
+      const allUserSockets = getUserSockets();
+      const sockets = allUserSockets.get(userId);
       if (sockets) {
         sockets.delete(socket.id);
         if (sockets.size === 0) {
-          userSockets.delete(userId);
+          allUserSockets.delete(userId);
           for (const friendId of friendIds) {
             emitToUser(friendId, "user:offline", { userId });
           }

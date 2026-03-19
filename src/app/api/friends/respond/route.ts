@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireSessionForApi } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
 import { invalidateFriendCache } from "@/lib/friends";
+import { emitNotification } from "@/lib/socket-server";
 
 export async function POST(req: NextRequest) {
   let session: Awaited<ReturnType<typeof requireSessionForApi>>;
@@ -56,8 +57,7 @@ export async function POST(req: NextRequest) {
         });
       });
 
-      // Notify the requester
-      await prisma.notification.create({
+      const notification = await prisma.notification.create({
         data: {
           recipientId: result.requesterId,
           type: "FRIEND_ACCEPT",
@@ -65,6 +65,18 @@ export async function POST(req: NextRequest) {
           message: `${session.user.name} accepted your friend request`,
         },
       });
+
+      try {
+        emitNotification(result.requesterId, {
+          id: notification.id,
+          type: notification.type,
+          message: notification.message,
+          referenceId: notification.referenceId,
+          createdAt: notification.createdAt,
+        });
+      } catch {
+        // Socket.io may not be initialized; ignore
+      }
 
       invalidateFriendCache(userId);
       invalidateFriendCache(result.requesterId);

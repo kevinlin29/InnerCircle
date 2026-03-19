@@ -15,6 +15,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import { useAppDispatch } from "@/store/hooks";
+import { updatePostLike, incrementCommentCount } from "@/store/postsSlice";
+import { getSocket } from "@/lib/socket-client";
+import type { PostUpdateEvent } from "@/hooks/useSocket";
 import type { PostItem, CommentItem } from "@/types/api";
 
 interface PostDetailDrawerProps {
@@ -36,6 +40,7 @@ export default function PostDetailDrawer({
   postId,
   onClose,
 }: PostDetailDrawerProps) {
+  const dispatch = useAppDispatch();
   const [post, setPost] = useState<PostItem | null>(null);
   const [comments, setComments] = useState<CommentItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -74,6 +79,35 @@ export default function PostDetailDrawer({
     };
   }, [postId]);
 
+  // 监听 post:updated 事件，实时更新 Drawer 内显示的点赞/评论数
+  useEffect(() => {
+    const socket = getSocket();
+    if (!socket || !postId) return;
+
+    function handlePostUpdate(data: PostUpdateEvent) {
+      if (data.postId !== postId) return;
+
+      setPost((prev) =>
+        prev
+          ? { ...prev, likeCount: data.likeCount, commentCount: data.commentCount }
+          : null
+      );
+
+      // 如果是其他用户发的评论，重新加载评论列表
+      if (data.commentCount > (post?.commentCount ?? 0)) {
+        fetch(`/api/posts/${postId}/comments`)
+          .then((r) => r.json())
+          .then((d) => setComments(d.comments ?? []))
+          .catch(() => {});
+      }
+    }
+
+    socket.on("post:updated", handlePostUpdate);
+    return () => {
+      socket.off("post:updated", handlePostUpdate);
+    };
+  }, [postId, post?.commentCount]);
+
   const handleLike = useCallback(async () => {
     if (!post || liking) return;
     setLiking(true);
@@ -86,15 +120,17 @@ export default function PostDetailDrawer({
             ? {
                 ...prev,
                 isLiked: data.liked,
-                likeCount: prev.likeCount + (data.liked ? 1 : -1),
+                likeCount: data.likeCount ?? prev.likeCount + (data.liked ? 1 : -1),
+                commentCount: data.commentCount ?? prev.commentCount,
               }
             : null
         );
+        dispatch(updatePostLike({ postId: post.id, liked: data.liked }));
       }
     } finally {
       setLiking(false);
     }
-  }, [post, liking]);
+  }, [post, liking, dispatch]);
 
   const handleComment = useCallback(
     async (e: React.FormEvent) => {
@@ -113,13 +149,14 @@ export default function PostDetailDrawer({
           setPost((prev) =>
             prev ? { ...prev, commentCount: prev.commentCount + 1 } : null
           );
+          dispatch(incrementCommentCount(post.id));
           setCommentText("");
         }
       } finally {
         setSubmitting(false);
       }
     },
-    [post, commentText, submitting]
+    [post, commentText, submitting, dispatch]
   );
 
   return (

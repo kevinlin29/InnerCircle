@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
-import { ImagePlus, MapPin, X, Loader2 } from "lucide-react";
+import { useState, useCallback, useRef, useEffect } from "react";
+import { ImagePlus, MapPin, X, Loader2, ShieldAlert, ShieldCheck } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -39,6 +39,8 @@ export default function CreatePostDrawer({
   const [locating, setLocating] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [moderationAlert, setModerationAlert] = useState<string[] | null>(null);
+  const [moderationPassed, setModerationPassed] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const reset = useCallback(() => {
@@ -47,7 +49,17 @@ export default function CreatePostDrawer({
     setLat(null);
     setLng(null);
     setError(null);
+    setModerationAlert(null);
+    setModerationPassed(false);
   }, []);
+
+  // Auto-request location when drawer opens
+  useEffect(() => {
+    if (open && lat == null && lng == null && navigator.geolocation) {
+      handleGetLocation();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   const handleGetLocation = useCallback(() => {
     if (!navigator.geolocation) {
@@ -97,12 +109,22 @@ export default function CreatePostDrawer({
           const res = await fetch("/api/upload", { method: "POST", body: formData });
           if (!res.ok) {
             const data = await res.json();
-            setError(data.error ?? "Upload failed");
+            if (res.status === 422 && data.moderation) {
+              setModerationAlert(data.moderation.categories ?? []);
+              setModerationPassed(false);
+              setError(null);
+            } else {
+              setError(data.error ?? "Upload failed");
+            }
             URL.revokeObjectURL(previewUrl);
             continue;
           }
+          setModerationAlert(null);
 
-          const { url, thumbnailUrl } = await res.json();
+          const { url, thumbnailUrl, moderation } = await res.json();
+          if (moderation?.checked && moderation?.status === "passed") {
+            setModerationPassed(true);
+          }
           setImages((prev) => [
             ...prev,
             { url, thumbnail: thumbnailUrl ?? url, previewUrl },
@@ -129,6 +151,10 @@ export default function CreatePostDrawer({
       setError("Post must have text or images");
       return;
     }
+    if (lat == null || lng == null) {
+      setError("Location is required — every post appears on the globe!");
+      return;
+    }
     setSubmitting(true);
     setError(null);
 
@@ -141,10 +167,8 @@ export default function CreatePostDrawer({
           thumbnail: img.thumbnail,
         }));
       }
-      if (lat != null && lng != null) {
-        body.lat = lat;
-        body.lng = lng;
-      }
+      body.lat = lat;
+      body.lng = lng;
 
       const res = await fetch("/api/posts", {
         method: "POST",
@@ -167,7 +191,10 @@ export default function CreatePostDrawer({
     }
   }, [textContent, images, lat, lng, onPostCreated, reset, onOpenChange]);
 
-  const canSubmit = (textContent.trim() || images.length > 0) && !submitting && !uploading;
+  const canSubmit =
+    (textContent.trim() || images.length > 0) &&
+    lat != null && lng != null &&
+    !submitting && !uploading;
 
   return (
     <Sheet
@@ -190,6 +217,32 @@ export default function CreatePostDrawer({
             <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
               {error}
             </p>
+          )}
+
+          {moderationAlert && (
+            <div className="rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-3">
+              <div className="flex items-center gap-2 text-red-400">
+                <ShieldAlert className="h-5 w-5 flex-shrink-0" />
+                <span className="text-sm font-semibold">
+                  Image rejected by AI Content Moderation
+                </span>
+              </div>
+              <p className="mt-1.5 text-xs text-red-300/80">
+                The uploaded image was flagged and automatically removed.
+              </p>
+              {moderationAlert.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {moderationAlert.map((cat) => (
+                    <span
+                      key={cat}
+                      className="rounded-full bg-red-500/20 px-2.5 py-0.5 text-[11px] font-medium text-red-300"
+                    >
+                      {cat}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
           )}
 
           {/* Text content */}
@@ -249,17 +302,83 @@ export default function CreatePostDrawer({
               ) : (
                 <ImagePlus className="h-4 w-4" />
               )}
-              {uploading ? "Uploading..." : "Add Images"}
+              {uploading ? "Uploading & scanning..." : "Add Images"}
             </Button>
+
+            {/* AI moderation status */}
+            {moderationPassed && images.length > 0 && (
+              <div className="flex items-center gap-1.5 rounded-md border border-green-500/30 bg-green-500/10 px-3 py-1.5">
+                <ShieldCheck className="h-4 w-4 flex-shrink-0 text-green-400" />
+                <span className="text-xs text-green-300">
+                  AI Content Moderation — Passed
+                </span>
+              </div>
+            )}
+
+            {uploading && (
+              <p className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                <ShieldAlert className="h-3.5 w-3.5" />
+                Running AI content moderation scan...
+              </p>
+            )}
           </div>
 
-          {/* Location */}
+          {/* Location (required) */}
           <div className="grid gap-2">
-            <Label>Location</Label>
-            {lat != null && lng != null ? (
+            <Label className="flex items-center gap-1.5">
+              Location
+              <span className="text-destructive">*</span>
+            </Label>
+            {lat == null || lng == null ? (
+              <div className="rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2.5">
+                <p className="mb-2 text-xs font-medium text-amber-200">
+                  Every post is placed on the globe — location is required.
+                </p>
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5"
+                    onClick={handleGetLocation}
+                    disabled={locating}
+                  >
+                    {locating ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <MapPin className="h-4 w-4" />
+                    )}
+                    {locating ? "Getting location..." : "Use My Location"}
+                  </Button>
+                  <span className="text-xs text-muted-foreground">or enter manually</span>
+                </div>
+                <div className="mt-2 flex items-center gap-1">
+                  <Input
+                    type="number"
+                    step="any"
+                    placeholder="Latitude"
+                    className="h-8 w-24 text-xs"
+                    onChange={(e) => {
+                      const v = parseFloat(e.target.value);
+                      if (!isNaN(v)) setLat(v);
+                    }}
+                  />
+                  <Input
+                    type="number"
+                    step="any"
+                    placeholder="Longitude"
+                    className="h-8 w-24 text-xs"
+                    onChange={(e) => {
+                      const v = parseFloat(e.target.value);
+                      if (!isNaN(v)) setLng(v);
+                    }}
+                  />
+                </div>
+              </div>
+            ) : (
               <div className="flex items-center gap-2">
-                <div className="flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-sm">
-                  <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
+                <div className="flex items-center gap-1.5 rounded-md border border-green-500/30 bg-green-500/10 px-3 py-1.5 text-sm text-green-300">
+                  <MapPin className="h-3.5 w-3.5" />
                   {lat.toFixed(4)}, {lng.toFixed(4)}
                 </div>
                 <Button
@@ -271,51 +390,7 @@ export default function CreatePostDrawer({
                   <X className="h-3 w-3" />
                 </Button>
               </div>
-            ) : (
-              <div className="flex items-center gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="gap-1.5"
-                  onClick={handleGetLocation}
-                  disabled={locating}
-                >
-                  {locating ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <MapPin className="h-4 w-4" />
-                  )}
-                  {locating ? "Getting location..." : "Use My Location"}
-                </Button>
-                <span className="text-xs text-muted-foreground">or</span>
-                <div className="flex items-center gap-1">
-                  <Input
-                    type="number"
-                    step="any"
-                    placeholder="Lat"
-                    className="h-8 w-20 text-xs"
-                    onChange={(e) => {
-                      const v = parseFloat(e.target.value);
-                      if (!isNaN(v)) setLat(v);
-                    }}
-                  />
-                  <Input
-                    type="number"
-                    step="any"
-                    placeholder="Lng"
-                    className="h-8 w-20 text-xs"
-                    onChange={(e) => {
-                      const v = parseFloat(e.target.value);
-                      if (!isNaN(v)) setLng(v);
-                    }}
-                  />
-                </div>
-              </div>
             )}
-            <p className="text-xs text-muted-foreground">
-              Posts with location will appear on the globe.
-            </p>
           </div>
         </div>
 

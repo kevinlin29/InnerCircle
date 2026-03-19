@@ -13,6 +13,7 @@ import {
   selectPost,
   setDatePreset,
   setScope,
+  syncPostCounts,
   type DatePreset,
 } from "@/store/postsSlice";
 import { Button } from "@/components/ui/button";
@@ -57,14 +58,34 @@ export default function FeedPage() {
     useAppSelector((s) => s.posts);
   const [createOpen, setCreateOpen] = useState(false);
 
-  // Real-time notifications via Socket.io
+  // Real-time notifications + post update sync via Socket.io
   useSocket({
     onNotification: (notification) => {
       const addToast = (window as unknown as Record<string, unknown>)
         .__addToast as ((n: unknown) => void) | undefined;
       addToast?.(notification);
+
+      if (notification.type === "NEW_POST") {
+        dispatch(fetchPosts());
+      }
+    },
+    onPostUpdate: (data) => {
+      dispatch(syncPostCounts({
+        postId: data.postId,
+        likeCount: data.likeCount,
+        commentCount: data.commentCount,
+      }));
     },
   });
+
+  // 注册全局 __openPost，供 NotificationToast 点击时调用
+  useEffect(() => {
+    const win = window as unknown as Record<string, unknown>;
+    win.__openPost = (postId: string) => {
+      dispatch(selectPost(postId));
+    };
+    return () => { delete win.__openPost; };
+  }, [dispatch]);
 
   useEffect(() => {
     dispatch(fetchPosts());

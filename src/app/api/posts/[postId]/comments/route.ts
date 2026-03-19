@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireSessionForApi } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
 import { areFriends } from "@/lib/friends";
+import { emitNotification, emitPostUpdate } from "@/lib/socket-server";
 
 export async function GET(
   req: NextRequest,
@@ -82,7 +83,7 @@ export async function POST(
     });
 
     if (post.authorId !== userId) {
-      await prisma.notification.create({
+      const notification = await prisma.notification.create({
         data: {
           recipientId: post.authorId,
           type: "COMMENT",
@@ -90,9 +91,33 @@ export async function POST(
           message: `${session.user.name} commented on your post`,
         },
       });
+
+      try {
+        emitNotification(post.authorId, {
+          id: notification.id,
+          type: notification.type,
+          message: notification.message,
+          referenceId: notification.referenceId,
+          createdAt: notification.createdAt,
+        });
+      } catch {
+        // ignore
+      }
     }
 
-    return NextResponse.json({ comment });
+    // 查询最新计数，广播给所有客户端
+    const [likeCount, commentCount] = await Promise.all([
+      prisma.like.count({ where: { postId } }),
+      prisma.comment.count({ where: { postId } }),
+    ]);
+
+    try {
+      emitPostUpdate(postId, { likeCount, commentCount, actorId: userId });
+    } catch {
+      // ignore
+    }
+
+    return NextResponse.json({ comment, likeCount, commentCount });
   } catch (err) {
     console.error("API error:", err);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

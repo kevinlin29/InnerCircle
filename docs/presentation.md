@@ -57,7 +57,7 @@ style: |
 
 # InnerCircle
 
-## A Small-Circle Social Media Platform
+## A Small-Circle Social Media Platform with Geospatial Sharing
 
 **Qiwen Lin · Irys Zhang · Weijie Zhu · Zhengyang Li**
 
@@ -87,7 +87,7 @@ University of Toronto — CSC309 Winter 2026
 
 # Our Solution: InnerCircle
 
-### A social platform that **limits your circle** to ~20–30 friends
+### A social platform that **limits your circle** to ~25 friends
 
 <div class="columns">
 <div class="col">
@@ -95,7 +95,7 @@ University of Toronto — CSC309 Winter 2026
 **Core Concept**
 - **Enforced friend cap** — must remove a friend to add a new one once at the limit
 - Every post, message, and interaction happens within a **small, trusted group**
-- Designed for users who want social media that feels **personal, not performative**
+- **Geospatial sharing** — posts pinned to locations and visualized on a 3D globe
 
 </div>
 <div class="col">
@@ -103,7 +103,7 @@ University of Toronto — CSC309 Winter 2026
 **Target Users**
 - Young adults and students
 - Want to stay connected with **close friends**
-- Share through geospatial photo sharing and real-time messaging
+- Share moments through **geospatial photo sharing** on an interactive globe
 - **Without** the noise and pressure of large-scale social networks
 
 </div>
@@ -113,7 +113,7 @@ University of Toronto — CSC309 Winter 2026
 
 # Technical Architecture
 
-### Next.js Full-Stack Application (Monorepo)
+### Next.js Full-Stack Application (Option A)
 
 <div class="columns">
 <div class="col">
@@ -121,39 +121,40 @@ University of Toronto — CSC309 Winter 2026
 **Frontend**
 - **Next.js 16** — App Router + Server Components
 - **React 19** + TypeScript
-- **Tailwind CSS** + **shadcn/ui**
-- **Redux Toolkit** — global real-time state
-- **Socket.io Client** — real-time events
+- **Tailwind CSS** + **shadcn/ui** (10 components)
+- **Redux Toolkit** — global state management (`postsSlice`)
+- **Socket.io Client** — real-time notifications
+- **react-globe.gl** — 3D globe visualization
 
 </div>
 <div class="col">
 
 **Backend**
-- **Next.js API Routes** — RESTful API
-- **PostgreSQL** + **Prisma ORM**
+- **API Routes** (18 endpoints) + **Server Actions** for mutations
+- **PostgreSQL** + **Prisma ORM** (10 models)
 - **Better Auth** — session-based authentication
-- **Socket.io** on a custom HTTP server
-- **AWS S3 / DO Spaces** — cloud storage
+- **Socket.io** on custom HTTP server (`server.ts`)
+- **S3 / DigitalOcean Spaces** — cloud storage (+ local dev fallback)
 - **Sharp** — server-side image processing
 
 </div>
 </div>
 
-> **Key Decision:** Custom HTTP server wraps Next.js to support persistent WebSocket connections — solving the serverless limitation for real-time features.
+> **Key Decision:** Custom HTTP server wraps Next.js to support persistent WebSocket connections alongside Next.js API Routes and Server Actions.
 
 ---
 
 # Database Design
 
-### 10 models, relational schema with Prisma ORM
+### 10 models, relational schema with Prisma ORM + PostgreSQL
 
 <div class="columns">
 <div class="col">
 
 **Core Models**
-- `User` — profile, avatar, bio, friendCapLimit
+- `User` — profile, avatar, bio, friendCapLimit (default 25)
 - `Friendship` — self-referencing many-to-many (PENDING / ACCEPTED / DECLINED)
-- `Post` — text content, lat/lng for geospatial mapping
+- `Post` — text content, **lat/lng** for geospatial mapping
 - `PostImage` — multiple images per post with thumbnails
 - `Comment` / `Like` — social interactions
 
@@ -161,19 +162,19 @@ University of Toronto — CSC309 Winter 2026
 <div class="col">
 
 **Advanced Models**
-- `Conversation` — efficient chat query model (avoids N+1)
+- `Conversation` — efficient chat model (avoids N+1 queries)
 - `Message` — real-time chat with read receipts
 - `Notification` — 6 types (friend_request, like, comment, message, etc.)
-- `Session` / `Account` — Better Auth managed
+- `Session` / `Account` / `Verification` — Better Auth managed
 
 </div>
 </div>
 
-> **Design Decision:** Added `Conversation` table instead of flat Message(senderId, receiverId) to make listing conversations, unread counts, and pagination efficient.
+> **Design Decision:** Added `Conversation` table instead of flat messages to make listing conversations, unread counts, and pagination efficient.
 
 ---
 
-# Core Feature: Authentication
+# Demo: Login & Authentication
 
 ### Better Auth with email/password + session management
 
@@ -183,279 +184,266 @@ University of Toronto — CSC309 Winter 2026
 **Implementation**
 - `better-auth` library with Prisma adapter
 - Session-based auth (7-day expiry, 1-day refresh)
-- Server-side helpers: `getSession()`, `requireSession()`, `requireSessionForApi()`
-- Middleware redirects: unauthenticated → `/login`, authenticated → `/feed`
+- `proxy.ts` — Next.js 16 route protection (replaces deprecated middleware)
+- Unauthenticated → redirect to `/login`
+- Authenticated on `/login` → redirect to `/feed`
+
+**Server-side helpers:**
+- `getSession()` / `requireSession()` / `requireSessionForApi()`
 
 </div>
 <div class="col">
 
-**Security**
-- All API routes call `requireSessionForApi()` — returns 401 if not logged in
-- Protected route middleware at `src/middleware.ts`
-- Password minimum 8 characters
-- Centralized auth utilities — one file to audit
+**Screenshot: Login Page**
+- Dark theme, clean Card layout
+- Email + password form
+- Link to registration
+- Responsive: `max-w-[90vw] sm:max-w-sm`
+
+**API Endpoints:**
+```
+POST /api/auth/sign-up/email  → Register
+POST /api/auth/sign-in/email  → Login
+GET  /api/auth/get-session    → Session
+```
 
 </div>
 </div>
-
-```
-POST /api/auth/sign-up   →  Register
-POST /api/auth/sign-in   →  Login
-GET  /api/auth/session    →  Get current session
-```
 
 ---
 
-# Core Feature: Friend System with Cap Enforcement
+# Demo: Globe Feed — The Core Experience
 
-### The defining feature — **structural** friend limit, not just a config flag
+### Interactive 3D globe shows posts pinned to real-world locations
 
 <div class="columns">
 <div class="col">
 
 **How It Works**
-1. User searches for people by name/email
-2. Send friend request → creates `Friendship(PENDING)`
-3. Addressee accepts → status → `ACCEPTED`
-4. **Cap check runs before both sending and accepting**
-5. At cap? Must remove a friend first
+- **react-globe.gl** renders an interactive 3D Earth
+- Posts with lat/lng appear as colored pins on the globe
+- Click a pin → camera flies to location → opens Post Detail drawer
+- Color-coded by author (hash-based coloring)
+- Filter by time range (7d / 30d / 90d / 1y / All) and scope (All / Mine)
 
 </div>
 <div class="col">
 
-**API Endpoints**
-```
-GET    /api/friends          → friend list
-POST   /api/friends/request  → send request
-POST   /api/friends/respond  → accept/decline
-POST   /api/friends/remove   → unfriend
-GET    /api/friends/pending  → pending requests
-GET    /api/users/search?q=  → user search
-```
+**State Management (Redux)**
+- `postsSlice` manages: `items[]`, `loading`, `selectedPostId`, `datePreset`, `scope`
+- `fetchPosts` async thunk with cursor pagination
+- `filteredPosts` derived via `useMemo` with date cutoff + scope filter
+- New posts added via `addPost` action → instant globe update
 
 </div>
 </div>
 
-> **Race Condition Handling:** The accept handler wraps count-check + status-update in a `prisma.$transaction()` to prevent concurrent accepts from exceeding the cap.
+> **Technical Challenge:** Redux/Immer freezes store objects. three-globe needs to mutate data objects internally. Solved by shallow-copying posts before passing to GlobeViewer.
 
 ---
 
-# Core Feature: Posts, Feed & Interactions
+# Demo: Create Post & Post Detail
 
-### Friend-based feed with like/comment system
+### Full post creation with image upload, geolocation, and interactive detail view
 
 <div class="columns">
 <div class="col">
 
-**Feed Logic**
-- Query posts from **self + all friends only**
-- Cursor-based pagination (20 posts/page)
-- Each post includes: author info, images, like count, comment count, `isLiked` flag
-- Friend-based access control on every endpoint
+**Create Post (FAB → Drawer)**
+- Text content input
+- **Image upload** → `POST /api/upload` → Sharp processing → S3/local storage
+- **Geolocation**: "Use My Location" (browser API) or manual lat/lng entry
+- Posts with coordinates appear on the globe immediately
 
 </div>
 <div class="col">
 
-**API Endpoints**
-```
-GET    /api/posts                      → feed
-POST   /api/posts                      → create post
-GET    /api/posts/[postId]             → single post
-POST   /api/posts/[postId]/like        → toggle like
-GET    /api/posts/[postId]/comments    → list comments
-POST   /api/posts/[postId]/comments    → add comment
-```
+**Post Detail (Drawer)**
+- Author info with avatar
+- Image gallery (horizontal scroll)
+- **Location badge** with coordinates
+- **Interactive like** button (toggle via `POST /api/posts/[postId]/like`)
+- **Comment section**: list existing + submit new comments
+- Real-time comment count and like state updates
 
 </div>
 </div>
 
-- Like/comment creates a `Notification` for the post author + emits real-time Socket.io event
-- Post images go through the **image processing pipeline** before storage
+> **File Processing Pipeline:** Upload (10MB max) → Sharp resize (1920px) → WebP conversion (quality 80) → Thumbnail (400×400) → S3 upload → return `{url, thumbnailUrl}`
 
 ---
 
-# Advanced Feature 1: Real-Time Chat (Socket.io)
+# Demo: Friends Management
 
-### One-on-one instant messaging with typing indicators and read receipts
+### Search, add, and manage your inner circle
 
 <div class="columns">
 <div class="col">
 
-**Architecture**
-- Custom `server.ts` creates HTTP server → attaches Socket.io → passes rest to Next.js
-- `userSockets` Map tracks userId → Set<socketId> (multi-tab support)
-- Online/offline status broadcast
+**Friends Page (`/friends`)**
+- **Find People** — search by name or email via `/api/users/search`
+- **Send friend request** → Server Action `sendFriendRequestAction()`
+- **Pending Requests** — accept or decline with Server Actions
+- **My Friends** — list with remove option
+- **Friend cap enforcement** — checked before both send and accept
 
 </div>
 <div class="col">
 
-**Events**
+**Server Actions (Next.js "use server")**
+```typescript
+// src/app/actions/friends.ts
+sendFriendRequestAction(addresseeId)
+respondFriendRequestAction(id, action)
+removeFriendAction(friendId)
+
+// src/app/actions/posts.ts
+createPostAction(input)
+toggleLikeAction(postId)
 ```
-chat:message   → send/receive message
-chat:typing    → typing indicator
-chat:read      → mark messages as read
-user:online    → friend came online
-user:offline   → friend went offline
-```
+Uses `revalidatePath()` for cache invalidation.
 
 </div>
 </div>
 
-**Client-Side Integration:**
-- `SocketProvider` connects on login, disconnects on logout
-- Incoming events dispatched to **Redux** slices for instant UI updates
-- Conversation model enables efficient history loading + unread counts
+> **Access Control:** Feed only shows posts from yourself + friends. Single-post API checks `areFriends()` before returning data.
 
 ---
 
-# Advanced Feature 2: Image Processing Pipeline
+# Advanced Feature 1: Real-Time (Socket.io)
 
-### Server-side compression, format conversion, and thumbnail generation
+### Live notifications via WebSocket — no page refresh needed
 
-**Pipeline Flow:**
+<div class="columns">
+<div class="col">
+
+**Server (`socket-server.ts`)**
+- Custom HTTP server attaches Socket.io
+- Session token authentication middleware
+- `userSockets` Map for multi-tab support
+- Online/offline status broadcast to friends only
+
+**Events:**
 ```
-Client Upload (max 10MB) → Server receives file
-    → Sharp: resize (max 1920px) + WebP conversion (quality: 80)
-    → Sharp: generate thumbnail (400x400, quality: 60)
-    → Upload both to S3/DigitalOcean Spaces
-    → Return { url, thumbnailUrl }
+chat:message    → send/receive DM
+chat:typing     → typing indicator
+chat:read       → read receipts
+notification:new → live notifications
+user:online/offline → presence
+```
+
+</div>
+<div class="col">
+
+**Client Integration**
+- `useSocket()` hook manages connection lifecycle
+- Connects on Feed mount, disconnects on unmount
+- `NotificationToast` component shows pop-up alerts
+- Socket events can trigger Redux dispatches
+
+**Feed page integration:**
+```typescript
+useSocket({
+  onNotification: (notification) => {
+    addToast(notification);
+  },
+});
+```
+
+</div>
+</div>
+
+---
+
+# Advanced Feature 2: File Handling & Processing
+
+### Non-trivial server-side image processing with Sharp
+
+**Full Pipeline:**
+```
+Client (max 10MB, image/* only)
+  → POST /api/upload (formData)
+  → Sharp: resize to 1920px + WebP (quality: 80) → main image
+  → Sharp: crop to 400×400 + WebP (quality: 60) → thumbnail
+  → Upload both to S3 (or local /public/uploads/ in dev)
+  → Background: AI content moderation (async, fail-open)
+  → Return { url, thumbnailUrl }
 ```
 
 <div class="columns">
 <div class="col">
 
-**Post Images**
-- Resize to fit 1920×1920
-- Convert to WebP (80% quality)
-- Generate 400×400 thumbnail
-- Store both versions
+**Cloud Storage**
+- S3-compatible (DigitalOcean Spaces / AWS)
+- **Local fallback** when `S3_ACCESS_KEY` is empty — saves to `public/uploads/`
+- Files associated with posts via `PostImage` model
 
 </div>
 <div class="col">
 
 **Avatar Processing**
-- Crop to 256×256
-- Convert to WebP
-- Single file upload
-
-**File Validation**
-- 10MB size limit
-- Image-only MIME check
+- Crop to 256×256 square
+- Convert to WebP (quality: 80)
+- Single file, no thumbnail needed
 
 </div>
 </div>
 
 ---
 
-# Advanced Feature 3: AI Content Moderation (External API)
+# Advanced Feature 3: Redux Toolkit State Management
 
-### Non-blocking, fail-open moderation for uploaded images
+### Global client-side state shared across components
 
 <div class="columns">
 <div class="col">
 
-**Design**
-1. Image uploads succeed **immediately**
-2. Moderation runs **asynchronously** in the background
-3. If API is down → **fail open** (allow the image)
-4. Flagged images logged for review
+**Store Setup**
+- `configureStore` with `postsReducer`
+- `StoreProvider` wraps entire app in `layout.tsx`
+- Typed hooks: `useAppDispatch`, `useAppSelector`
+
+**postsSlice manages:**
+- `items: PostItem[]` — all loaded posts
+- `loading` / `error` — async fetch state
+- `selectedPostId` — currently viewed post
+- `datePreset` / `scope` — filter state
 
 </div>
 <div class="col">
 
-**Why Fail-Open?**
-- Core UX never blocked by third-party dependency
-- 10-second timeout prevents hanging
-- Logged warnings for flagged content
-- Graceful degradation on API errors
+**Why Redux over local state?**
+- Post data shared between GlobeViewer, FilterPanel, PostDetailDrawer, CreatePostDrawer
+- Derived state (`filteredPosts`) with clear update logic via `useMemo`
+- `createAsyncThunk` for paginated post fetching
+- Real-time socket events can dispatch to update store globally
+- Optimistic updates: `addPost`, `updatePostLike`, `incrementCommentCount`
 
 </div>
 </div>
 
-```typescript
-// Non-blocking: fire-and-forget
-moderateImage(url).then(async (result) => {
-  if (!result.safe) {
-    console.warn(`Image flagged: ${url}`, result.categories);
-  }
-});
-```
-
-> This satisfies the **External API Integration** advanced feature requirement.
+> **Architecture:** Feed page reads from Redux → GlobeViewer renders pins → PostDetailDrawer reads selected post → CreatePostDrawer dispatches `addPost` → globe updates instantly.
 
 ---
 
-# Advanced Feature 4: Redux Toolkit State Management
+# Requirements Checklist
 
-### Global state for real-time data across the application
+### All core and advanced requirements satisfied
 
-**4 Redux Slices:**
+| Requirement | Status | Implementation |
+|-------------|--------|---------------|
+| TypeScript (frontend + backend) | ✅ | All `.ts` / `.tsx`, 18 API routes |
+| Next.js with App Router | ✅ | Next.js 16, Server Components, API Routes, Server Actions |
+| Tailwind CSS + shadcn/ui | ✅ | 10 shadcn components, responsive breakpoints |
+| Responsive Design | ✅ | `sm:` / `md:` / `lg:` across login, register, feed, friends |
+| PostgreSQL | ✅ | Prisma ORM, 10 models |
+| Cloud Storage | ✅ | S3 upload/download + local dev fallback |
+| **Adv: Auth** | ✅ | Better Auth, sessions, protected routes, friend-based ACL |
+| **Adv: Real-Time** | ✅ | Socket.io server + client, live notifications |
+| **Adv: File Handling** | ✅ | Sharp image processing, WebP, thumbnails |
+| **Adv: Redux State Mgmt** | ✅ | Redux Toolkit, postsSlice, global state |
 
-| Slice | Purpose | Key State |
-|-------|---------|-----------|
-| `feedSlice` | Post feed management | posts[], nextCursor, loading |
-| `chatSlice` | Real-time messaging | conversations[], activeConversation, messages[] |
-| `notificationSlice` | Notification tracking | notifications[], unreadCount |
-| `friendSlice` | Friend status management | friends[], pendingRequests[], onlineUsers |
-
-**Why Redux, not just React Context?**
-- Multiple real-time data sources (WebSocket events + API responses + optimistic updates)
-- `createAsyncThunk` for API calls with loading/error states
-- Consistent updates across components without race conditions or stale data
-- Socket.io events dispatch directly to Redux → instant UI updates everywhere
-
----
-
-# Frontend UI Design
-
-### Clean, minimal aesthetic — responsive across desktop and mobile
-
-<div class="columns">
-<div class="col">
-
-**Desktop Layout**
-- Left sidebar navigation
-- 5 main sections: Feed, Friends, Chat, Notifications, Profile
-- Sign out at bottom of sidebar
-
-**Mobile Layout**
-- Bottom tab bar navigation
-- Full-screen views for chat
-- Touch-friendly targets (min 44px)
-
-</div>
-<div class="col">
-
-**Key Pages**
-- **Feed** — infinite scroll with post cards
-- **Friends** — 3-tab layout (My Friends, Requests, Search) + cap indicator
-- **Chat** — two-panel (conversation list + chat window)
-- **Notifications** — real-time badge + notification list
-- **Profile** — avatar, bio, friend count, post history
-
-**Components:** shadcn/ui + Tailwind CSS
-
-</div>
-</div>
-
----
-
-# Implementation Status & Completion Plan
-
-| Module | Status | Notes |
-|--------|--------|-------|
-| Database & Prisma Schema | ✅ Complete | 10 models, all migrations applied |
-| Authentication (Better Auth) | ✅ Complete | Sign up, sign in, sessions, middleware |
-| Friend System API | ✅ Complete | Request, accept, decline, remove, cap enforcement |
-| Posts & Feed API | ✅ Complete | CRUD, like, comment, friend-based filtering |
-| Real-Time Chat (Socket.io) | ✅ Complete | Custom server, message persistence, typing |
-| Notification System | ✅ Complete | 6 types, real-time delivery |
-| Image Processing Pipeline | ✅ Complete | Sharp, WebP, thumbnails, S3 upload |
-| AI Content Moderation | ✅ Complete | Async, fail-open, external API |
-| Frontend UI & Pages | 🔧 In Progress | Layout, components being built |
-| Redux State Management | 🔧 In Progress | Store configured, slices defined |
-
-> **Plan:** Complete frontend pages and Redux integration by March 27. Core user flow (auth → friends → post → feed → chat) is the priority.
+> **4 advanced features** implemented (only 2 required).
 
 ---
 
@@ -467,7 +455,6 @@ moderateImage(url).then(async (result) => {
 
 **InnerCircle** — Social media that feels personal, not performative.
 
-GitHub Repository: *[to be shared]*
+GitHub: **github.com/kevinlin29/InnerCircle** (branch: `feature/build-plan`)
 
 **Team:** Qiwen Lin · Irys Zhang · Weijie Zhu · Zhengyang Li
-

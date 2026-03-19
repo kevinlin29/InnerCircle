@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireSessionForApi } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
 import { getFriendCount } from "@/lib/friends";
+import { emitNotification } from "@/lib/socket-server";
 
 export async function POST(req: NextRequest) {
   let session: Awaited<ReturnType<typeof requireSessionForApi>>;
@@ -44,8 +45,7 @@ export async function POST(req: NextRequest) {
       data: { requesterId: userId, addresseeId },
     });
 
-    // Create notification for addressee
-    await prisma.notification.create({
+    const notification = await prisma.notification.create({
       data: {
         recipientId: addresseeId,
         type: "FRIEND_REQUEST",
@@ -53,6 +53,18 @@ export async function POST(req: NextRequest) {
         message: `${session.user.name} sent you a friend request`,
       },
     });
+
+    try {
+      emitNotification(addresseeId, {
+        id: notification.id,
+        type: notification.type,
+        message: notification.message,
+        referenceId: notification.referenceId,
+        createdAt: notification.createdAt,
+      });
+    } catch {
+      // Socket.io may not be initialized; ignore
+    }
 
     return NextResponse.json({ friendship });
   } catch (err) {

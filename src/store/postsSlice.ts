@@ -27,10 +27,10 @@ export const fetchPosts = createAsyncThunk("posts/fetchAll", async () => {
   let cursor: string | null = null;
 
   do {
-    const url = cursor ? `/api/posts?cursor=${cursor}` : "/api/posts";
-    const res = await fetch(url);
+    const url: string = cursor ? `/api/posts?cursor=${cursor}` : "/api/posts";
+    const res: Response = await fetch(url);
     if (!res.ok) throw new Error("Failed to fetch posts");
-    const data = await res.json();
+    const data: { posts: PostItem[]; nextCursor?: string | null } = await res.json();
     allPosts.push(...data.posts);
     cursor = data.nextCursor ?? null;
   } while (cursor);
@@ -68,6 +68,16 @@ const postsSlice = createSlice({
       const post = state.items.find((p) => p.id === action.payload);
       if (post) post.commentCount += 1;
     },
+    syncPostCounts(
+      state,
+      action: PayloadAction<{ postId: string; likeCount: number; commentCount: number }>
+    ) {
+      const post = state.items.find((p) => p.id === action.payload.postId);
+      if (post) {
+        post.likeCount = action.payload.likeCount;
+        post.commentCount = action.payload.commentCount;
+      }
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -93,5 +103,6 @@ export const {
   setScope,
   updatePostLike,
   incrementCommentCount,
+  syncPostCounts,
 } = postsSlice.actions;
 export default postsSlice.reducer;
