@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>InnerCircle — Project Presentation</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  
+  @media print {
+    .slide { page-break-after: always; height: 100vh; }
+    .nav-controls { display: none !important; }
+    body { font-size: 11pt; }
+  }
+  
+  @media screen {
+    .slide { display: none; }
+    .slide.active { display: flex; }
+  }
+
+  body {
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+    background: #0f0f1a;
+    color: #1a1a2e;
+    line-height: 1.5;
+    overflow: hidden;
+  }
+
+  .slide {
+    width: 100vw;
+    height: 100vh;
+    padding: 50px 80px;
+    flex-direction: column;
+    justify-content: flex-start;
+    background: #ffffff;
+    position: relative;
+  }
+
+  .slide::after {
+    content: attr(data-slide);
+    position: absolute;
+    bottom: 20px;
+    right: 40px;
+    font-size: 0.8em;
+    color: #94a3b8;
+  }
+
+  .slide.title-slide {
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    color: white;
+  }
+
+  .slide.title-slide h1 {
+    font-size: 3.5em;
+    margin-bottom: 8px;
+    border: none;
+    background: linear-gradient(135deg, #a78bfa, #818cf8, #6366f1);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .slide.title-slide .subtitle {
+    font-size: 1.4em;
+    color: #c4b5fd;
+    margin-bottom: 30px;
+    font-weight: 300;
+  }
+
+  .slide.title-slide .team {
+    font-size: 1em;
+    color: #a5b4fc;
+    margin-top: 10px;
+  }
+
+  .slide.title-slide .course {
+    font-size: 0.85em;
+    color: #818cf8;
+    margin-top: 8px;
+  }
+
+  .slide.end-slide {
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    color: white;
+  }
+
+  .slide.end-slide h1 {
+    font-size: 3em;
+    border: none;
+    color: white;
+    margin-bottom: 20px;
+  }
+
+  .slide.end-slide .subtitle {
+    font-size: 1.2em;
+    color: #c4b5fd;
+    margin-bottom: 40px;
+    font-style: italic;
+  }
+
+  .slide.end-slide .team {
+    font-size: 1em;
+    color: #a5b4fc;
+  }
+
+  h1 {
+    font-size: 1.9em;
+    color: #1a1a2e;
+    border-bottom: 3px solid #6366f1;
+    padding-bottom: 10px;
+    margin-bottom: 24px;
+  }
+
+  h2 {
+    font-size: 1.15em;
+    color: #4338ca;
+    margin: 16px 0 8px;
+  }
+
+  h3 {
+    font-size: 0.95em;
+    color: #6366f1;
+    margin: 12px 0 6px;
+    font-weight: 500;
+  }
+
+  p { margin: 6px 0; font-size: 0.88em; }
+  
+  ul, ol {
+    margin: 6px 0 6px 24px;
+    font-size: 0.88em;
+  }
+
+  li { margin: 3px 0; }
+
+  strong, b { color: #6366f1; }
+
+  code {
+    background: #f1f5f9;
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-size: 0.85em;
+    font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+  }
+
+  pre {
+    background: #1e293b;
+    color: #e2e8f0;
+    padding: 14px 18px;
+    border-radius: 8px;
+    font-size: 0.78em;
+    overflow-x: auto;
+    margin: 8px 0;
+    line-height: 1.5;
+    font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+  }
+
+  .columns {
+    display: flex;
+    gap: 36px;
+    margin: 10px 0;
+    flex: 1;
+  }
+
+  .col { flex: 1; }
+
+  .highlight-box {
+    border-left: 4px solid #6366f1;
+    background: #f8fafc;
+    padding: 10px 16px;
+    margin: 10px 0;
+    border-radius: 0 6px 6px 0;
+    font-size: 0.85em;
+  }
+
+  .tag {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 0.75em;
+    font-weight: 600;
+    margin: 2px;
+  }
+
+  .tag-green { background: #dcfce7; color: #166534; }
+  .tag-yellow { background: #fef9c3; color: #854d0e; }
+  .tag-blue { background: #dbeafe; color: #1e40af; }
+  .tag-purple { background: #ede9fe; color: #5b21b6; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.82em;
+    margin: 8px 0;
+  }
+
+  th {
+    background: #6366f1;
+    color: white;
+    padding: 8px 12px;
+    text-align: left;
+    font-weight: 600;
+  }
+
+  td {
+    padding: 6px 12px;
+    border-bottom: 1px solid #e2e8f0;
+  }
+
+  tr:nth-child(even) { background: #f8fafc; }
+
+  .flow-diagram {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin: 12px 0;
+    flex-wrap: wrap;
+    font-size: 0.82em;
+  }
+
+  .flow-step {
+    background: #ede9fe;
+    color: #5b21b6;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-weight: 500;
+  }
+
+  .flow-arrow { color: #6366f1; font-size: 1.2em; }
+
+  .nav-controls {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 16px;
+    z-index: 100;
+  }
+
+  .nav-btn {
+    background: #6366f1;
+    color: white;
+    border: none;
+    padding: 10px 24px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.9em;
+    font-weight: 500;
+    transition: background 0.2s;
+  }
+
+  .nav-btn:hover { background: #4f46e5; }
+
+  .nav-btn:disabled {
+    background: #cbd5e1;
+    cursor: not-allowed;
+  }
+
+  .slide-counter {
+    color: white;
+    font-size: 0.9em;
+    display: flex;
+    align-items: center;
+    background: rgba(99, 102, 241, 0.3);
+    padding: 6px 16px;
+    border-radius: 8px;
+  }
+
+  .accent-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #6366f1, #a78bfa, #c4b5fd);
+  }
+
+  .status-complete { color: #16a34a; }
+  .status-progress { color: #d97706; }
+</style>
+</head>
+<body>
+
+<!-- Slide 1: Title -->
+<div class="slide title-slide active" data-slide="">
+  <h1>InnerCircle</h1>
+  <div class="subtitle">A Small-Circle Social Media Platform</div>
+  <div class="team"><strong style="-webkit-text-fill-color: #c4b5fd;">Qiwen Lin &nbsp;·&nbsp; Irys Zhang &nbsp;·&nbsp; Weijie Zhu &nbsp;·&nbsp; Zhengyang Li</strong></div>
+  <div class="course">University of Toronto — CSC309 Winter 2026</div>
+</div>
+
+<!-- Slide 2: Problem -->
+<div class="slide" data-slide="2 / 14">
+  <div class="accent-bar"></div>
+  <h1>The Problem</h1>
+  <h2>Mainstream social media encourages quantity over quality</h2>
+  <div class="columns">
+    <div class="col">
+      <ul>
+        <li>Platforms like Instagram, Twitter, Facebook prioritize <strong>large follower counts</strong> and engagement metrics</li>
+        <li>Users experience <strong>shallow interactions</strong>, social comparison, and content overload</li>
+        <li>Research shows people maintain meaningful relationships with only <strong>5–15 close friends</strong> (Dunbar's Number)</li>
+      </ul>
+    </div>
+    <div class="col">
+      <h2>Existing solutions fall short</h2>
+      <table>
+        <tr><th>Platform</th><th>Limitation</th></tr>
+        <tr><td><strong>BeReal</strong></td><td>Still open follower model, no cap</td></tr>
+        <tr><td><strong>IG Close Friends</strong></td><td>An afterthought, not core design</td></tr>
+        <tr><td><strong>WhatsApp Groups</strong></td><td>No social feed, profiles, discovery</td></tr>
+      </table>
+      <div class="highlight-box">
+        <strong>None of these structurally enforce small, meaningful networks.</strong>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Slide 3: Solution -->
+<div class="slide" data-slide="3 / 14">
+  <div class="accent-bar"></div>
+  <h1>Our Solution: InnerCircle</h1>
+  <h2>A social platform that limits your circle to ~20–30 friends</h2>
+  <div class="columns">
+    <div class="col">
+      <h3>Core Concept</h3>
+      <ul>
+        <li><strong>Enforced friend cap</strong> — must remove a friend to add a new one at the limit</li>
+        <li>Every interaction happens within a <strong>small, trusted group</strong></li>
+        <li>Social media that feels <strong>personal, not performative</strong></li>
+      </ul>
+      <h3>Target Users</h3>
+      <ul>
+        <li>Young adults and students</li>
+        <li>Want to share with close friends through <strong>photo sharing</strong> and <strong>real-time messaging</strong></li>
+        <li>Without the noise of large-scale social networks</li>
+      </ul>
+    </div>
+    <div class="col">
+      <h3>Key Differentiators</h3>
+      <div class="highlight-box">
+        <p><strong>1. Finite Social Graph</strong> — Friend cap is a <em>structural constraint</em>, not just a config flag. Enforced at database transaction level.</p>
+      </div>
+      <div class="highlight-box">
+        <p><strong>2. Friend-Based Access Control</strong> — Every post, message, and notification is gated by friendship status.</p>
+      </div>
+      <div class="highlight-box">
+        <p><strong>3. Real-Time First</strong> — Chat, notifications, online/offline status all delivered via WebSockets.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Slide 4: Tech Stack -->
+<div class="slide" data-slide="4 / 14">
+  <div class="accent-bar"></div>
+  <h1>Technical Architecture</h1>
+  <h2>Next.js Full-Stack Application (Monorepo)</h2>
+  <div class="columns">
+    <div class="col">
+      <h3>Frontend</h3>
+      <p><span class="tag tag-blue">Next.js 16</span> <span class="tag tag-blue">React 19</span> <span class="tag tag-blue">TypeScript</span></p>
+      <p><span class="tag tag-purple">Tailwind CSS</span> <span class="tag tag-purple">shadcn/ui</span></p>
+      <p><span class="tag tag-green">Redux Toolkit</span> <span class="tag tag-green">Socket.io Client</span></p>
+      <h3>Backend</h3>
+      <p><span class="tag tag-blue">Next.js API Routes</span> <span class="tag tag-blue">REST API</span></p>
+      <p><span class="tag tag-purple">PostgreSQL</span> <span class="tag tag-purple">Prisma ORM</span></p>
+      <p><span class="tag tag-green">Better Auth</span> <span class="tag tag-green">Socket.io Server</span></p>
+      <p><span class="tag tag-yellow">AWS S3 / DO Spaces</span> <span class="tag tag-yellow">Sharp</span></p>
+    </div>
+    <div class="col">
+      <h3>Architecture Overview</h3>
+      <pre>
+Browser (React + Redux + Socket.io Client)
+    │
+    ▼
+Custom HTTP Server (server.ts)
+    ├── Next.js Handler (API Routes + Pages)
+    │       │
+    │       ▼
+    │   Prisma ORM ──→ PostgreSQL
+    │       │
+    │       ▼
+    │   AWS S3 (Image Storage)
+    │
+    └── Socket.io Server
+            │
+            ▼
+        Real-time Events
+        (chat, notifications, presence)</pre>
+      <div class="highlight-box">
+        <strong>Key Decision:</strong> Custom HTTP server wraps Next.js to support persistent WebSocket connections.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Slide 5: Database -->
+<div class="slide" data-slide="5 / 14">
+  <div class="accent-bar"></div>
+  <h1>Database Design</h1>
+  <h2>10 models — relational schema managed with Prisma ORM + PostgreSQL</h2>
+  <div class="columns">
+    <div class="col">
+      <h3>Core Models</h3>
+      <table>
+        <tr><th>Model</th><th>Purpose</th><th>Key Fields</th></tr>
+        <tr><td><code>User</code></td><td>User profiles</td><td>name, email, avatar, bio, <strong>friendCapLimit</strong></td></tr>
+        <tr><td><code>Friendship</code></td><td>Friend graph</td><td>requesterId, addresseeId, status (enum)</td></tr>
+        <tr><td><code>Post</code></td><td>User posts</td><td>textContent, lat, lng, authorId</td></tr>
+        <tr><td><code>PostImage</code></td><td>Post media</td><td>imageUrl, thumbnailUrl, orderIndex</td></tr>
+        <tr><td><code>Comment</code></td><td>Comments</td><td>content, postId, authorId</td></tr>
+        <tr><td><code>Like</code></td><td>Likes</td><td>postId, userId (unique constraint)</td></tr>
+      </table>
+    </div>
+    <div class="col">
+      <h3>Real-Time Models</h3>
+      <table>
+        <tr><th>Model</th><th>Purpose</th><th>Key Design</th></tr>
+        <tr><td><code>Conversation</code></td><td>Chat sessions</td><td>Avoids N+1 query problem</td></tr>
+        <tr><td><code>Message</code></td><td>Chat messages</td><td>readAt for read receipts</td></tr>
+        <tr><td><code>Notification</code></td><td>Alerts</td><td>6 types, read/unread flag</td></tr>
+      </table>
+      <h3>Key Design Decisions</h3>
+      <ul>
+        <li><code>Friendship</code>: self-referencing M:N with <strong>unique(requesterId, addresseeId)</strong></li>
+        <li><code>Like</code>: <strong>unique(postId, userId)</strong> prevents double-likes</li>
+        <li>Strategic <strong>indexes</strong> on foreign keys, timestamps, and composite fields</li>
+        <li><code>Conversation</code> added to avoid flat message query inefficiency</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- Slide 6: Auth -->
+<div class="slide" data-slide="6 / 14">
+  <div class="accent-bar"></div>
+  <h1>Core: Authentication & Authorization</h1>
+  <h2>Better Auth with session-based authentication + centralized access control</h2>
+  <div class="columns">
+    <div class="col">
+      <h3>Authentication Flow</h3>
+      <div class="flow-diagram">
+        <span class="flow-step">Register / Login</span>
+        <span class="flow-arrow">→</span>
+        <span class="flow-step">Better Auth validates</span>
+        <span class="flow-arrow">→</span>
+        <span class="flow-step">Session created</span>
+        <span class="flow-arrow">→</span>
+        <span class="flow-step">Cookie set</span>
+      </div>
+      <h3>Implementation</h3>
+      <ul>
+        <li>Session-based auth (7-day expiry, 1-day refresh)</li>
+        <li>Password minimum 8 characters</li>
+        <li>Middleware: unauthenticated → <code>/login</code></li>
+        <li>Middleware: authenticated on auth pages → <code>/feed</code></li>
+      </ul>
+      <pre>POST /api/auth/sign-up    → Register
+POST /api/auth/sign-in    → Login
+GET  /api/auth/session     → Current session
+POST /api/auth/sign-out    → Logout</pre>
+    </div>
+    <div class="col">
+      <h3>Centralized Auth Utilities</h3>
+      <pre>// src/lib/auth-utils.ts
+
+// For Server Components (redirects)
+async function requireSession()
+
+// For API routes (throws 401)
+async function requireSessionForApi()
+
+// General session check
+async function getSession()</pre>
+      <div class="highlight-box">
+        <strong>Security Pattern:</strong> Every API route starts with <code>requireSessionForApi()</code>. One file to audit — <code>src/lib/auth-utils.ts</code>.
+      </div>
+      <h3>Route Protection</h3>
+      <ul>
+        <li>Middleware intercepts all non-public, non-API routes</li>
+        <li>Session cookie checked via <code>getSessionCookie()</code></li>
+        <li>Public paths: <code>/</code>, <code>/login</code>, <code>/register</code></li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- Slide 7: Friend System -->
+<div class="slide" data-slide="7 / 14">
+  <div class="accent-bar"></div>
+  <h1>Core: Friend System with Cap Enforcement</h1>
+  <h2>The defining feature — structural friend limit enforced at database level</h2>
+  <div class="columns">
+    <div class="col">
+      <h3>Friend Request Flow</h3>
+      <div class="flow-diagram">
+        <span class="flow-step">Search user</span>
+        <span class="flow-arrow">→</span>
+        <span class="flow-step">Check cap</span>
+        <span class="flow-arrow">→</span>
+        <span class="flow-step">Send request</span>
+        <span class="flow-arrow">→</span>
+        <span class="flow-step">Addressee checks cap</span>
+        <span class="flow-arrow">→</span>
+        <span class="flow-step">Accept / Decline</span>
+      </div>
+      <h3>Cap Enforcement</h3>
+      <ul>
+        <li>Default cap: <strong>25 friends</strong> per user</li>
+        <li>Cap checked on <strong>both</strong> sending AND accepting</li>
+        <li>At cap → must remove a friend before adding new one</li>
+        <li>UI shows <strong>progress bar</strong>: "12 / 25 friends"</li>
+      </ul>
+      <h3>Race Condition Protection</h3>
+      <pre>// Atomic transaction prevents concurrent 
+// accepts from exceeding the cap
+await prisma.$transaction(async (tx) => {
+  const count = await tx.friendship.count({...})
+  if (count >= user.friendCapLimit) throw Error
+  await tx.friendship.update({status: "ACCEPTED"})
+})</pre>
+    </div>
+    <div class="col">
+      <h3>API Endpoints</h3>
+      <table>
+        <tr><th>Method</th><th>Endpoint</th><th>Action</th></tr>
+        <tr><td>GET</td><td><code>/api/friends</code></td><td>List friends</td></tr>
+        <tr><td>POST</td><td><code>/api/friends/request</code></td><td>Send request</td></tr>
+        <tr><td>POST</td><td><code>/api/friends/respond</code></td><td>Accept/Decline</td></tr>
+        <tr><td>POST</td><td><code>/api/friends/remove</code></td><td>Unfriend</td></tr>
+        <tr><td>GET</td><td><code>/api/friends/pending</code></td><td>Pending list</td></tr>
+        <tr><td>GET</td><td><code>/api/users/search</code></td><td>Search users</td></tr>
+      </table>
+      <h3>Shared Utilities (<code>src/lib/friends.ts</code>)</h3>
+      <ul>
+        <li><code>getFriendIds()</code> — with TTL cache</li>
+        <li><code>areFriends()</code> — friendship check</li>
+        <li><code>getFriendCount()</code> — count for cap</li>
+        <li><code>invalidateFriendCache()</code> — cache busting</li>
+      </ul>
+      <div class="highlight-box">
+        <strong>Access Control:</strong> Every API route that involves user content checks friendship status via <code>areFriends()</code>.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Slide 8: Posts & Feed -->
+<div class="slide" data-slide="8 / 14">
+  <div class="accent-bar"></div>
+  <h1>Core: Posts, Feed & Social Interactions</h1>
+  <h2>Friend-based feed with like/comment system and cloud storage</h2>
+  <div class="columns">
+    <div class="col">
+      <h3>Feed Logic</h3>
+      <ul>
+        <li>Query posts from <strong>self + all friends only</strong></li>
+        <li><strong>Cursor-based pagination</strong> (20 posts/page)</li>
+        <li>Each post: author info, images, like/comment counts, <code>isLiked</code> flag</li>
+        <li>Friend-based access control on every endpoint</li>
+      </ul>
+      <h3>API Endpoints</h3>
+      <table>
+        <tr><th>Method</th><th>Endpoint</th><th>Action</th></tr>
+        <tr><td>GET</td><td><code>/api/posts</code></td><td>Feed (paginated)</td></tr>
+        <tr><td>POST</td><td><code>/api/posts</code></td><td>Create post</td></tr>
+        <tr><td>POST</td><td><code>/api/posts/[id]/like</code></td><td>Toggle like</td></tr>
+        <tr><td>GET</td><td><code>/api/posts/[id]/comments</code></td><td>List comments</td></tr>
+        <tr><td>POST</td><td><code>/api/posts/[id]/comments</code></td><td>Add comment</td></tr>
+      </table>
+    </div>
+    <div class="col">
+      <h3>Post Creation Flow</h3>
+      <div class="flow-diagram">
+        <span class="flow-step">Write text</span>
+        <span class="flow-arrow">→</span>
+        <span class="flow-step">Upload images</span>
+        <span class="flow-arrow">→</span>
+        <span class="flow-step">Process & store</span>
+        <span class="flow-arrow">→</span>
+        <span class="flow-step">Create post record</span>
+      </div>
+      <h3>Key Implementation Details</h3>
+      <ul>
+        <li>Posts support <strong>multiple images</strong> with order indexing</li>
+        <li>Like uses <strong>unique(postId, userId)</strong> constraint — toggle behavior</li>
+        <li>Like/comment triggers <strong>notification</strong> to post author</li>
+        <li>Notification also emitted via <strong>Socket.io</strong> for real-time delivery</li>
+      </ul>
+      <div class="highlight-box">
+        <strong>Cloud Storage:</strong> Post images stored in DigitalOcean Spaces (S3-compatible). Both full-size and thumbnail URLs saved in <code>PostImage</code> model.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Slide 9: Real-Time Chat -->
+<div class="slide" data-slide="9 / 14">
+  <div class="accent-bar"></div>
+  <h1>Advanced Feature 1: Real-Time Chat</h1>
+  <h2>Socket.io — One-on-one messaging with typing indicators and read receipts</h2>
+  <div class="columns">
+    <div class="col">
+      <h3>Architecture</h3>
+      <pre>// server.ts (project root)
+const httpServer = createServer(handler)
+initSocketServer(httpServer)  // Attach Socket.io
+httpServer.listen(3000)
+
+// userSockets: Map&lt;userId, Set&lt;socketId&gt;&gt;
+// Supports multiple tabs per user</pre>
+      <h3>Socket Events</h3>
+      <table>
+        <tr><th>Event</th><th>Direction</th><th>Purpose</th></tr>
+        <tr><td><code>chat:message</code></td><td>↔</td><td>Send/receive message</td></tr>
+        <tr><td><code>chat:typing</code></td><td>→</td><td>Typing indicator</td></tr>
+        <tr><td><code>chat:read</code></td><td>→</td><td>Mark as read</td></tr>
+        <tr><td><code>user:online</code></td><td>←</td><td>User connected</td></tr>
+        <tr><td><code>user:offline</code></td><td>←</td><td>User disconnected</td></tr>
+      </table>
+    </div>
+    <div class="col">
+      <h3>Message Persistence</h3>
+      <ul>
+        <li>Messages saved to PostgreSQL via Prisma <strong>before</strong> being emitted</li>
+        <li><code>Conversation</code> model for efficient listing and unread counts</li>
+        <li><code>readAt</code> timestamp for read receipt tracking</li>
+        <li>Message history loaded from API, new messages via Socket</li>
+      </ul>
+      <h3>Client Integration</h3>
+      <ul>
+        <li><code>SocketProvider</code> connects on login, disconnects on logout</li>
+        <li>Incoming events dispatched to <strong>Redux</strong> slices</li>
+        <li>Instant UI updates across all components</li>
+      </ul>
+      <div class="highlight-box">
+        <strong>Design Decision:</strong> Custom HTTP server chosen from Day 1 (not a fallback) — Next.js API Routes cannot handle WebSocket upgrades. This eliminates the integration risk entirely.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Slide 10: Image Pipeline -->
+<div class="slide" data-slide="10 / 14">
+  <div class="accent-bar"></div>
+  <h1>Advanced Feature 2: Image Processing Pipeline</h1>
+  <h2>Server-side compression, WebP conversion, and thumbnail generation with Sharp</h2>
+  
+  <h3>Pipeline Flow</h3>
+  <div class="flow-diagram">
+    <span class="flow-step">Client Upload (≤10MB)</span>
+    <span class="flow-arrow">→</span>
+    <span class="flow-step">Validate type & size</span>
+    <span class="flow-arrow">→</span>
+    <span class="flow-step">Sharp: resize + WebP</span>
+    <span class="flow-arrow">→</span>
+    <span class="flow-step">Sharp: thumbnail</span>
+    <span class="flow-arrow">→</span>
+    <span class="flow-step">Upload to S3</span>
+    <span class="flow-arrow">→</span>
+    <span class="flow-step">Return URLs</span>
+  </div>
+
+  <div class="columns" style="margin-top: 10px;">
+    <div class="col">
+      <h3>Post Image Processing</h3>
+      <pre>// Full size: max 1920px, WebP @ 80%
+sharp(input)
+  .resize(1920, 1920, { fit: "inside" })
+  .webp({ quality: 80 })
+  .toBuffer()
+
+// Thumbnail: 400x400 crop, WebP @ 60%
+sharp(input)
+  .resize(400, 400, { fit: "cover" })
+  .webp({ quality: 60 })
+  .toBuffer()</pre>
+    </div>
+    <div class="col">
+      <h3>Avatar Processing</h3>
+      <pre>// 256x256 crop, WebP @ 80%
+sharp(input)
+  .resize(256, 256, { fit: "cover" })
+  .webp({ quality: 80 })
+  .toBuffer()</pre>
+      <h3>Storage</h3>
+      <ul>
+        <li>AWS SDK v3 for <strong>S3-compatible</strong> storage (DigitalOcean Spaces)</li>
+        <li>Organized folders: <code>posts/</code>, <code>posts/thumbnails/</code>, <code>avatars/</code></li>
+        <li>UUID-based filenames prevent collisions</li>
+        <li>Public-read ACL for direct URL access</li>
+      </ul>
+    </div>
+  </div>
+  <div class="highlight-box">
+    <strong>Design Decision:</strong> Compress <em>before</em> upload to S3 (not after). Client-side 10MB limit keeps Sharp's work manageable. No background job queue needed.
+  </div>
+</div>
+
+<!-- Slide 11: AI Moderation + Redux -->
+<div class="slide" data-slide="11 / 14">
+  <div class="accent-bar"></div>
+  <h1>Advanced Features 3 & 4</h1>
+  <div class="columns">
+    <div class="col">
+      <h2>AI Content Moderation (External API)</h2>
+      <h3>Non-blocking, fail-open design</h3>
+      <div class="flow-diagram">
+        <span class="flow-step">Upload succeeds</span>
+        <span class="flow-arrow">→</span>
+        <span class="flow-step">Async moderation</span>
+        <span class="flow-arrow">→</span>
+        <span class="flow-step">Flag if unsafe</span>
+      </div>
+      <ul>
+        <li>Image uploads succeed <strong>immediately</strong></li>
+        <li>Moderation runs in the <strong>background</strong></li>
+        <li>10-second timeout prevents hanging</li>
+        <li>API down → <strong>fail open</strong> (allow image)</li>
+        <li>Flagged images logged for review</li>
+      </ul>
+      <pre>// Fire-and-forget pattern
+moderateImage(url).then((result) => {
+  if (!result.safe)
+    console.warn("Flagged:", result.categories)
+})</pre>
+      <div class="highlight-box">Satisfies <strong>External API Integration</strong> requirement.</div>
+    </div>
+    <div class="col">
+      <h2>Redux Toolkit State Management</h2>
+      <h3>Global state for real-time data</h3>
+      <table>
+        <tr><th>Slice</th><th>Purpose</th></tr>
+        <tr><td><code>feedSlice</code></td><td>Posts, pagination, optimistic likes</td></tr>
+        <tr><td><code>chatSlice</code></td><td>Conversations, messages, typing</td></tr>
+        <tr><td><code>notificationSlice</code></td><td>Alerts, unread count</td></tr>
+        <tr><td><code>friendSlice</code></td><td>Friends, requests, online status</td></tr>
+      </table>
+      <h3>Why Redux over React Context?</h3>
+      <ul>
+        <li>Multiple real-time data sources (WebSocket + API + optimistic updates)</li>
+        <li><code>createAsyncThunk</code> for API calls with loading/error</li>
+        <li>Socket.io events dispatch directly → instant UI updates</li>
+        <li>No race conditions or stale data</li>
+      </ul>
+      <div class="highlight-box">Satisfies <strong>Advanced State Management</strong> requirement.</div>
+    </div>
+  </div>
+</div>
+
+<!-- Slide 12: Notifications -->
+<div class="slide" data-slide="12 / 14">
+  <div class="accent-bar"></div>
+  <h1>Notification System & Frontend Design</h1>
+  <div class="columns">
+    <div class="col">
+      <h2>Real-Time Notifications</h2>
+      <h3>6 notification types delivered instantly</h3>
+      <table>
+        <tr><th>Type</th><th>Trigger</th></tr>
+        <tr><td><code>FRIEND_REQUEST</code></td><td>Someone sends a friend request</td></tr>
+        <tr><td><code>FRIEND_ACCEPT</code></td><td>Friend request accepted</td></tr>
+        <tr><td><code>NEW_POST</code></td><td>Friend creates a new post</td></tr>
+        <tr><td><code>LIKE</code></td><td>Someone likes your post</td></tr>
+        <tr><td><code>COMMENT</code></td><td>Someone comments on your post</td></tr>
+        <tr><td><code>MESSAGE</code></td><td>New direct message received</td></tr>
+      </table>
+      <h3>Delivery</h3>
+      <ul>
+        <li>Created in DB via API routes</li>
+        <li>Emitted via Socket.io to online users</li>
+        <li>Redux <code>notificationSlice</code> updates unread count</li>
+        <li>Badge indicator on navigation</li>
+      </ul>
+    </div>
+    <div class="col">
+      <h2>Frontend UI Design</h2>
+      <h3>Responsive layout — desktop + mobile</h3>
+      <ul>
+        <li><strong>Desktop:</strong> Left sidebar navigation</li>
+        <li><strong>Mobile:</strong> Bottom tab bar (44px touch targets)</li>
+      </ul>
+      <h3>Key Pages</h3>
+      <ul>
+        <li><strong>Feed</strong> — Infinite scroll, post cards with images, like/comment</li>
+        <li><strong>Friends</strong> — 3 tabs (My Friends, Requests, Search) + cap progress bar</li>
+        <li><strong>Chat</strong> — Two-panel layout (conversations + active chat)</li>
+        <li><strong>Notifications</strong> — Real-time list with unread badge</li>
+        <li><strong>Profile</strong> — Avatar, bio, friend count, post history, edit dialog</li>
+      </ul>
+      <h3>Component Library</h3>
+      <p><span class="tag tag-purple">shadcn/ui</span> <span class="tag tag-blue">Tailwind CSS</span> <span class="tag tag-green">lucide-react icons</span></p>
+    </div>
+  </div>
+</div>
+
+<!-- Slide 13: Status & Plan -->
+<div class="slide" data-slide="13 / 14">
+  <div class="accent-bar"></div>
+  <h1>Implementation Status & Completion Plan</h1>
+  <div class="columns">
+    <div class="col">
+      <h2>Current Status</h2>
+      <table>
+        <tr><th>Module</th><th>Status</th></tr>
+        <tr><td>Database & Prisma Schema (10 models)</td><td><span class="status-complete">✅ Complete</span></td></tr>
+        <tr><td>Authentication (Better Auth)</td><td><span class="status-complete">✅ Complete</span></td></tr>
+        <tr><td>Friend System API (cap enforcement)</td><td><span class="status-complete">✅ Complete</span></td></tr>
+        <tr><td>Posts & Feed API (CRUD + access control)</td><td><span class="status-complete">✅ Complete</span></td></tr>
+        <tr><td>Real-Time Chat (Socket.io + persistence)</td><td><span class="status-complete">✅ Complete</span></td></tr>
+        <tr><td>Notification System (6 types + real-time)</td><td><span class="status-complete">✅ Complete</span></td></tr>
+        <tr><td>Image Pipeline (Sharp + S3)</td><td><span class="status-complete">✅ Complete</span></td></tr>
+        <tr><td>AI Content Moderation</td><td><span class="status-complete">✅ Complete</span></td></tr>
+        <tr><td>Frontend UI Pages</td><td><span class="status-progress">🔧 In Progress</span></td></tr>
+        <tr><td>Redux Integration</td><td><span class="status-progress">🔧 In Progress</span></td></tr>
+      </table>
+    </div>
+    <div class="col">
+      <h2>Completion Plan (Mar 19 → Apr 3)</h2>
+      <h3>Week of Mar 19–25</h3>
+      <ul>
+        <li>Complete all frontend pages (Feed, Friends, Chat, Notifications, Profile)</li>
+        <li>Wire Redux slices to Socket.io events</li>
+        <li>Integrate image upload into post creation and profile edit</li>
+      </ul>
+      <h3>Week of Mar 26 – Apr 1</h3>
+      <ul>
+        <li>Responsive design polish (mobile optimization)</li>
+        <li>Error handling & edge cases</li>
+        <li>Performance optimization (lazy loading, pagination)</li>
+      </ul>
+      <h3>Apr 1–3</h3>
+      <ul>
+        <li>End-to-end testing of all user flows</li>
+        <li>Documentation (README, ai-session.md)</li>
+        <li>Video demo recording</li>
+      </ul>
+      <div class="highlight-box">
+        <strong>All backend APIs and advanced features are functional.</strong> Remaining work is frontend UI and integration.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Slide 14: End -->
+<div class="slide end-slide" data-slide="">
+  <h1>Thank You</h1>
+  <div class="subtitle">Social media that feels personal, not performative.</div>
+  <div class="team">
+    <p><strong style="color: #c4b5fd;">Qiwen Lin &nbsp;·&nbsp; Irys Zhang &nbsp;·&nbsp; Weijie Zhu &nbsp;·&nbsp; Zhengyang Li</strong></p>
+    <br>
+    <p style="color: #818cf8; font-size: 0.9em;">Questions?</p>
+  </div>
+</div>
+
+<!-- Navigation Controls -->
+<div class="nav-controls">
+  <button class="nav-btn" id="prevBtn" onclick="changeSlide(-1)">← Previous</button>
+  <span class="slide-counter" id="slideCounter">1 / 14</span>
+  <button class="nav-btn" id="nextBtn" onclick="changeSlide(1)">Next →</button>
+</div>
+
+<script>
+let currentSlide = 0;
+const slides = document.querySelectorAll('.slide');
+const totalSlides = slides.length;
+
+function showSlide(n) {
+  slides.forEach(s => s.classList.remove('active'));
+  currentSlide = Math.max(0, Math.min(n, totalSlides - 1));
+  slides[currentSlide].classList.add('active');
+  document.getElementById('slideCounter').textContent = `${currentSlide + 1} / ${totalSlides}`;
+  document.getElementById('prevBtn').disabled = currentSlide === 0;
+  document.getElementById('nextBtn').disabled = currentSlide === totalSlides - 1;
+}
+
+function changeSlide(delta) {
+  showSlide(currentSlide + delta);
+}
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); changeSlide(1); }
+  if (e.key === 'ArrowLeft') { e.preventDefault(); changeSlide(-1); }
+  if (e.key === 'Home') { e.preventDefault(); showSlide(0); }
+  if (e.key === 'End') { e.preventDefault(); showSlide(totalSlides - 1); }
+});
+
+showSlide(0);
+</script>
+
+</body>
+</html>

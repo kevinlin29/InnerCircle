@@ -37,8 +37,13 @@ export default function GlobeViewer({ posts, onSelectPost }: GlobeViewerProps) {
   const globeRef = useRef<GlobeMethods | undefined>(undefined);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  // Shallow-copy each object so three-globe can attach internal properties
+  // (Redux/Immer freezes store objects, making them non-extensible)
   const geoPoints = useMemo(
-    () => posts.filter((p) => p.lat != null && p.lng != null),
+    () =>
+      posts
+        .filter((p) => p.lat != null && p.lng != null)
+        .map((p) => ({ ...p })),
     [posts]
   );
 

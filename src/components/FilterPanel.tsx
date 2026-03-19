@@ -28,10 +28,10 @@ export default function FilterPanel({
   onScopeChange,
 }: FilterPanelProps) {
   return (
-    <div className="absolute left-4 top-4 z-10 flex flex-col gap-3 rounded-xl border border-border/50 bg-background/80 p-3 backdrop-blur-md">
-      <div className="flex flex-col gap-1.5">
-        <span className="text-xs font-medium text-muted-foreground">
-          Time Range
+    <div className="absolute left-2 top-2 z-10 flex flex-col gap-2 rounded-xl border border-border/50 bg-background/80 p-2 backdrop-blur-md sm:left-4 sm:top-4 sm:gap-3 sm:p-3">
+      <div className="flex flex-col gap-1">
+        <span className="text-[10px] font-medium text-muted-foreground sm:text-xs">
+          Range
         </span>
         <div className="flex flex-wrap gap-1">
           {(Object.keys(DATE_LABELS) as DatePreset[]).map((preset) => (
@@ -47,8 +47,8 @@ export default function FilterPanel({
         </div>
       </div>
 
-      <div className="flex flex-col gap-1.5">
-        <span className="text-xs font-medium text-muted-foreground">
+      <div className="flex flex-col gap-1">
+        <span className="text-[10px] font-medium text-muted-foreground sm:text-xs">
           Scope
         </span>
         <ToggleGroup
