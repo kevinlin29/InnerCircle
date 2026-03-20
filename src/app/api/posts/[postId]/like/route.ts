@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireSessionForApi } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
 import { areFriends } from "@/lib/friends";
+import { emitNotification, emitPostUpdate } from "@/lib/socket-server";
 
 export async function POST(
   req: NextRequest,
@@ -18,7 +19,6 @@ export async function POST(
     const userId = session.user.id;
     const { postId } = await params;
 
-    // Parallelize independent lookups
     const [post, existingLike] = await Promise.all([
       prisma.post.findUnique({ where: { id: postId }, select: { authorId: true } }),
       prisma.like.findUnique({ where: { postId_userId: { postId, userId } } }),
@@ -29,14 +29,17 @@ export async function POST(
       return NextResponse.json({ error: "Not authorized" }, { status: 403 });
     }
 
+    let liked: boolean;
+
     if (existingLike) {
       await prisma.like.delete({ where: { id: existingLike.id } });
-      return NextResponse.json({ liked: false });
+      liked = false;
     } else {
       await prisma.like.create({ data: { postId, userId } });
+      liked = true;
 
       if (post.authorId !== userId) {
-        await prisma.notification.create({
+        const notification = await prisma.notification.create({
           data: {
             recipientId: post.authorId,
             type: "LIKE",
@@ -44,10 +47,34 @@ export async function POST(
             message: `${session.user.name} liked your post`,
           },
         });
-      }
 
-      return NextResponse.json({ liked: true });
+        try {
+          emitNotification(post.authorId, {
+            id: notification.id,
+            type: notification.type,
+            message: notification.message,
+            referenceId: notification.referenceId,
+            createdAt: notification.createdAt,
+          });
+        } catch {
+          // ignore
+        }
+      }
     }
+
+    // 查询最新计数，广播给所有客户端
+    const [likeCount, commentCount] = await Promise.all([
+      prisma.like.count({ where: { postId } }),
+      prisma.comment.count({ where: { postId } }),
+    ]);
+
+    try {
+      emitPostUpdate(postId, { likeCount, commentCount, liked, actorId: userId });
+    } catch {
+      // ignore
+    }
+
+    return NextResponse.json({ liked, likeCount, commentCount });
   } catch (err) {
     console.error("API error:", err);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireSessionForApi } from "@/lib/auth-utils";
 import { processImage, processAvatar } from "@/lib/image-processing";
-import { uploadFile } from "@/lib/storage";
+import { uploadFile, deleteFile } from "@/lib/storage";
 import { moderateImage } from "@/lib/moderation";
 
 export async function POST(req: NextRequest) {
@@ -14,18 +14,16 @@ export async function POST(req: NextRequest) {
   try {
     const formData = await req.formData();
     const file = formData.get("file") as File;
-    const type = formData.get("type") as string; // "post" | "avatar"
+    const type = formData.get("type") as string;
 
     if (!file) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
-    // Validate file size (10MB max)
     if (file.size > 10 * 1024 * 1024) {
       return NextResponse.json({ error: "File too large (max 10MB)" }, { status: 400 });
     }
 
-    // Validate file type
     if (!file.type.startsWith("image/")) {
       return NextResponse.json({ error: "Only image files are allowed" }, { status: 400 });
     }
@@ -38,25 +36,61 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ url });
     }
 
-    // Post image (default)
+    // Demo mode: filename containing "unsafe" triggers simulated rejection
+    // (useful for screen recordings without real NSFW content)
+    const fileName = file.name.toLowerCase();
+    if (fileName.includes("unsafe") || fileName.includes("flagged")) {
+      return NextResponse.json(
+        {
+          error: "Image rejected by AI content moderation",
+          moderation: {
+            categories: ["Nudity / Sexual content", "Violence"],
+            confidence: 0.92,
+          },
+        },
+        { status: 422 }
+      );
+    }
+
+    // Post image: process → upload → moderate → return or reject
     const { buffer, thumbnail, contentType, extension } = await processImage(inputBuffer);
 
-    // Parallelize S3 uploads
     const [url, thumbnailUrl] = await Promise.all([
       uploadFile(buffer, "posts", contentType, extension),
       uploadFile(thumbnail, "posts/thumbnails", contentType, extension),
     ]);
 
-    // Trigger moderation in background (non-blocking, with error handling)
-    moderateImage(url)
-      .then((result) => {
-        if (!result.safe) {
-          console.warn(`Image flagged by moderation: ${url}`, result.categories);
-        }
-      })
-      .catch((err) => console.error("Moderation failed:", err));
+    // Run AI moderation synchronously
+    const modResult = await moderateImage(url);
 
-    return NextResponse.json({ url, thumbnailUrl });
+    if (!modResult.safe) {
+      await Promise.all([
+        deleteFile(url).catch(() => {}),
+        deleteFile(thumbnailUrl).catch(() => {}),
+      ]);
+
+      return NextResponse.json(
+        {
+          error: "Image rejected by AI content moderation",
+          moderation: {
+            categories: modResult.categories,
+            confidence: modResult.confidence,
+          },
+        },
+        { status: 422 }
+      );
+    }
+
+    const apiConfigured = !!(process.env.SIGHTENGINE_API_USER && process.env.SIGHTENGINE_API_SECRET);
+
+    return NextResponse.json({
+      url,
+      thumbnailUrl,
+      moderation: {
+        checked: apiConfigured,
+        status: apiConfigured ? "passed" : "skipped",
+      },
+    });
   } catch (err) {
     console.error("API error:", err);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

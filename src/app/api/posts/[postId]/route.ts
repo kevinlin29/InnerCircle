@@ -41,6 +41,8 @@ export async function GET(
         authorId: post.authorId,
         author: post.author,
         textContent: post.textContent,
+        lat: post.lat,
+        lng: post.lng,
         images: post.images,
         isLiked: post.likes.length > 0,
         likeCount: post._count.likes,

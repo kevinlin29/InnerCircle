@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireSessionForApi } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
 import { getFriendIds } from "@/lib/friends";
+import { emitNotification } from "@/lib/socket-server";
 
 export async function GET(req: NextRequest) {
   let session: Awaited<ReturnType<typeof requireSessionForApi>>;
@@ -94,6 +95,32 @@ export async function POST(req: NextRequest) {
         images: { orderBy: { orderIndex: "asc" } },
       },
     });
+
+    // 异步通知所有好友有新帖子
+    getFriendIds(userId).then(async (friendIds) => {
+      const userName = session.user.name || "Someone";
+      for (const friendId of friendIds) {
+        try {
+          const notification = await prisma.notification.create({
+            data: {
+              recipientId: friendId,
+              type: "NEW_POST",
+              referenceId: post.id,
+              message: `${userName} shared a new post`,
+            },
+          });
+          emitNotification(friendId, {
+            id: notification.id,
+            type: notification.type,
+            message: notification.message,
+            referenceId: notification.referenceId,
+            createdAt: notification.createdAt,
+          });
+        } catch {
+          // ignore individual notification failures
+        }
+      }
+    }).catch(() => {});
 
     return NextResponse.json({ post });
   } catch (err) {
