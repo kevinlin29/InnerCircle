@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import {
@@ -9,11 +10,13 @@ import {
   MessageCircle,
   User,
   LogOut,
+  Plus,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { signOut, useSession } from "@/lib/auth-client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import CreatePostDialog from "@/components/CreatePostDialog";
 import { cn } from "@/lib/utils";
 
 const navItems = [
@@ -28,6 +31,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const { data: session } = useSession();
+  const [createPostOpen, setCreatePostOpen] = useState(false);
 
   const user = session?.user;
   const initials = user?.name
@@ -56,6 +60,15 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         </div>
 
         <nav className="flex-1 flex flex-col gap-1 px-2 lg:px-3 py-2">
+          <Button
+            onClick={() => setCreatePostOpen(true)}
+            className="mb-2 gap-2"
+            size="sm"
+          >
+            <Plus className="h-4 w-4" />
+            <span className="hidden lg:block">New Post</span>
+          </Button>
+
           {navItems.map(({ href, label, icon: Icon }) => {
             const active =
               pathname === href || pathname.startsWith(href + "/");
@@ -103,6 +116,15 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         {children}
       </main>
 
+      {/* Mobile floating action button */}
+      <Button
+        onClick={() => setCreatePostOpen(true)}
+        size="icon-lg"
+        className="fixed bottom-20 right-4 z-50 rounded-full shadow-lg md:hidden"
+      >
+        <Plus className="h-5 w-5" />
+      </Button>
+
       {/* Mobile bottom tab bar */}
       <nav className="fixed bottom-0 left-0 right-0 z-50 flex md:hidden border-t border-border bg-background/95 backdrop-blur-md">
         {navItems.map(({ href, label, icon: Icon }) => {
@@ -123,6 +145,12 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           );
         })}
       </nav>
+
+      <CreatePostDialog
+        open={createPostOpen}
+        onOpenChange={setCreatePostOpen}
+        onCreated={() => router.refresh()}
+      />
     </div>
   );
 }
