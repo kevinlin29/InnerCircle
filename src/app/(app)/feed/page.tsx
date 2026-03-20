@@ -2,11 +2,8 @@
 
 import { useEffect, useState, useCallback, useMemo } from "react";
 import dynamic from "next/dynamic";
-import { useRouter } from "next/navigation";
 import { subDays, subYears } from "date-fns";
-import { LogOut } from "lucide-react";
-import { signOut, useSession } from "@/lib/auth-client";
-import { Button } from "@/components/ui/button";
+import { useSession } from "@/lib/auth-client";
 import FilterPanel, {
   type DatePreset,
   type ScopeFilter,
@@ -17,7 +14,7 @@ import type { PostItem } from "@/types/api";
 const GlobeViewer = dynamic(() => import("@/components/GlobeViewer"), {
   ssr: false,
   loading: () => (
-    <div className="flex h-screen w-screen items-center justify-center bg-background">
+    <div className="flex h-full w-full items-center justify-center bg-background">
       <div className="h-10 w-10 animate-spin rounded-full border-2 border-muted-foreground border-t-primary" />
     </div>
   ),
@@ -40,7 +37,6 @@ function getCutoffDate(preset: DatePreset): Date | null {
 }
 
 export default function FeedPage() {
-  const router = useRouter();
   const { data: session } = useSession();
   const [posts, setPosts] = useState<PostItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -108,13 +104,8 @@ export default function FeedPage() {
     setSelectedPostId(null);
   }, []);
 
-  async function handleSignOut() {
-    await signOut();
-    router.push("/login");
-  }
-
   return (
-    <div className="relative h-screen w-screen overflow-hidden bg-background">
+    <div className="relative h-full w-full overflow-hidden bg-background">
       {loading ? (
         <div className="flex h-full w-full items-center justify-center">
           <div className="flex flex-col items-center gap-3">
@@ -133,20 +124,7 @@ export default function FeedPage() {
         onScopeChange={setScope}
       />
 
-      {/* User info + sign out */}
-      <div className="absolute right-4 top-4 z-10 flex items-center gap-2 rounded-xl border border-border/50 bg-background/80 px-3 py-2 backdrop-blur-md">
-        {session?.user && (
-          <span className="text-sm font-medium">
-            {session.user.name || session.user.email}
-          </span>
-        )}
-        <Button variant="ghost" size="icon-xs" onClick={handleSignOut}>
-          <LogOut className="h-4 w-4" />
-        </Button>
-      </div>
-
-      {/* Post count indicator */}
-      <div className="absolute bottom-4 left-4 z-10 rounded-lg border border-border/50 bg-background/80 px-3 py-1.5 text-xs text-muted-foreground backdrop-blur-md">
+      <div className="absolute bottom-4 left-4 z-10 rounded-lg border border-border/50 bg-background/80 px-3 py-1.5 text-xs text-muted-foreground backdrop-blur-md md:bottom-4 bottom-20">
         {filteredPosts.filter((p) => p.lat != null && p.lng != null).length}{" "}
         posts on globe
       </div>
