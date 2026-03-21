@@ -17,6 +17,7 @@ import { signOut, useSession } from "@/lib/auth-client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import CreatePostDialog from "@/components/CreatePostDialog";
+import NotificationPanel from "@/components/NotificationPanel";
 import { cn } from "@/lib/utils";
 
 const navItems = [
@@ -52,11 +53,14 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     <div className="flex h-screen w-screen overflow-hidden bg-background">
       {/* Desktop sidebar */}
       <aside className="hidden md:flex flex-col w-16 lg:w-56 shrink-0 border-r border-sidebar-border bg-sidebar">
-        <div className="flex items-center h-14 px-3 lg:px-5">
-          <span className="text-lg font-bold tracking-tight lg:hidden">IC</span>
-          <span className="text-lg font-bold tracking-tight hidden lg:block">
-            InnerCircle
-          </span>
+        <div className="flex items-center justify-between h-14 px-3 lg:px-5">
+          <div>
+            <span className="text-lg font-bold tracking-tight lg:hidden">IC</span>
+            <span className="text-lg font-bold tracking-tight hidden lg:block">
+              InnerCircle
+            </span>
+          </div>
+          <NotificationPanel />
         </div>
 
         <nav className="flex-1 flex flex-col gap-1 px-2 lg:px-3 py-2">
