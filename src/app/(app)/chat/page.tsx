@@ -6,11 +6,13 @@ import { formatDistanceToNow } from "date-fns";
 import { Loader2, MessageCircle } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { useOnlineStatus } from "@/components/OnlineStatusProvider";
 import type { ConversationPreview } from "@/types/api";
 
 export default function ChatListPage() {
   const [conversations, setConversations] = useState<ConversationPreview[]>([]);
   const [loading, setLoading] = useState(true);
+  const { isOnline } = useOnlineStatus();
 
   useEffect(() => {
     async function load() {
@@ -66,10 +68,15 @@ export default function ChatListPage() {
                   href={`/chat/${conv.otherUser.id}`}
                   className="flex items-center gap-3 rounded-lg px-3 py-3 transition-colors hover:bg-accent"
                 >
-                  <Avatar>
-                    <AvatarImage src={conv.otherUser.image ?? undefined} />
-                    <AvatarFallback>{initials}</AvatarFallback>
-                  </Avatar>
+                  <div className="relative">
+                    <Avatar>
+                      <AvatarImage src={conv.otherUser.image ?? undefined} />
+                      <AvatarFallback>{initials}</AvatarFallback>
+                    </Avatar>
+                    {isOnline(conv.otherUser.id) && (
+                      <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-background" />
+                    )}
+                  </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-semibold truncate">

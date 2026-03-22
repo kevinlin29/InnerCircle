@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Card } from "@/components/ui/card";
+import { useOnlineStatus } from "@/components/OnlineStatusProvider";
 import type { UserPreview, PendingRequest } from "@/types/api";
 
 function UserInitials(name: string | null) {
@@ -149,6 +150,7 @@ export default function FriendsPage() {
     }
   }
 
+  const { isOnline } = useOnlineStatus();
   const friendIds = new Set(friends.map((f) => f.id));
 
   if (loading) {
@@ -314,13 +316,16 @@ export default function FriendsPage() {
                   key={friend.id}
                   className="flex items-center gap-3 p-3"
                 >
-                  <Link href={`/profile/${friend.id}`}>
+                  <Link href={`/profile/${friend.id}`} className="relative">
                     <Avatar>
                       <AvatarImage src={friend.image ?? undefined} />
                       <AvatarFallback>
                         {UserInitials(friend.name)}
                       </AvatarFallback>
                     </Avatar>
+                    {isOnline(friend.id) && (
+                      <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-card" />
+                    )}
                   </Link>
                   <div className="flex-1 min-w-0">
                     <Link
@@ -329,11 +334,13 @@ export default function FriendsPage() {
                     >
                       {friend.name}
                     </Link>
-                    {friend.bio && (
+                    {friend.bio ? (
                       <p className="text-xs text-muted-foreground truncate">
                         {friend.bio}
                       </p>
-                    )}
+                    ) : isOnline(friend.id) ? (
+                      <p className="text-xs text-emerald-500">Online</p>
+                    ) : null}
                   </div>
                   <div className="flex gap-1 shrink-0">
                     <Button asChild size="sm" variant="ghost">

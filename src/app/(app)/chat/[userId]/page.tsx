@@ -15,6 +15,7 @@ import { connectSocket, getSocket, disconnectSocket } from "@/lib/socket-client"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useOnlineStatus } from "@/components/OnlineStatusProvider";
 import type { MessageItem, SocketChatMessage, SocketTypingEvent } from "@/types/api";
 
 interface OtherUser {
@@ -40,6 +41,7 @@ export default function ChatThreadPage({
   const [sending, setSending] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   const [socketReady, setSocketReady] = useState(false);
+  const { isOnline } = useOnlineStatus();
   const bottomRef = useRef<HTMLDivElement>(null);
   const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -226,16 +228,25 @@ export default function ChatThreadPage({
           </Link>
         </Button>
         <Link href={`/profile/${otherUserId}`} className="flex items-center gap-3">
-          <Avatar>
-            <AvatarImage src={otherUser?.image ?? undefined} />
-            <AvatarFallback>{initials}</AvatarFallback>
-          </Avatar>
+          <div className="relative">
+            <Avatar>
+              <AvatarImage src={otherUser?.image ?? undefined} />
+              <AvatarFallback>{initials}</AvatarFallback>
+            </Avatar>
+            {isOnline(otherUserId) && (
+              <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-background" />
+            )}
+          </div>
           <div>
             <p className="text-sm font-semibold">{otherUser?.name ?? "User"}</p>
-            {isTyping && (
+            {isTyping ? (
               <p className="text-xs text-muted-foreground animate-pulse">
                 typing...
               </p>
+            ) : isOnline(otherUserId) ? (
+              <p className="text-xs text-emerald-500">Online</p>
+            ) : (
+              <p className="text-xs text-muted-foreground">Offline</p>
             )}
           </div>
         </Link>
