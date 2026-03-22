@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import PostCard from "@/components/PostCard";
+import { cropAvatar } from "@/lib/client-image";
 import type { UserProfile, PostItem } from "@/types/api";
 
 interface ProfileViewProps {
@@ -89,10 +90,11 @@ export default function ProfileView({ userId }: ProfileViewProps) {
     }
   }
 
-  async function handleAvatarUpload(file: File) {
-    if (!file.type.startsWith("image/")) return;
+  async function handleAvatarUpload(rawFile: File) {
+    if (!rawFile.type.startsWith("image/")) return;
     setUploadingAvatar(true);
     try {
+      const file = await cropAvatar(rawFile);
       const form = new FormData();
       form.append("file", file);
       form.append("type", "avatar");

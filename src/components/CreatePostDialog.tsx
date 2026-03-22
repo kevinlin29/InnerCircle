@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { resizeImage } from "@/lib/client-image";
 
 interface UploadedImage {
   file: File;
@@ -53,12 +54,13 @@ export default function CreatePostDialog({
     setLng("");
   }, []);
 
-  function handleFiles(files: FileList | null) {
+  async function handleFiles(files: FileList | null) {
     if (!files) return;
     const newImages: UploadedImage[] = [];
     for (let i = 0; i < files.length && images.length + newImages.length < 4; i++) {
-      const file = files[i];
-      if (!file.type.startsWith("image/")) continue;
+      const raw = files[i];
+      if (!raw.type.startsWith("image/")) continue;
+      const file = await resizeImage(raw);
       newImages.push({ file, preview: URL.createObjectURL(file) });
     }
     setImages((prev) => [...prev, ...newImages]);
