@@ -282,7 +282,7 @@ export default function ChatThreadPage({
       </div>
 
       {/* Input */}
-      <div className="shrink-0 border-t border-border px-4 py-3">
+      <div className="shrink-0 border-t border-border px-4 py-3 mb-16 md:mb-0">
         <div className="mx-auto flex max-w-xl gap-2">
           <Input
             placeholder={socketReady ? "Type a message..." : "Connecting..."}
@@ -293,12 +293,13 @@ export default function ChatThreadPage({
             }}
             onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && sendMessage()}
             disabled={!socketReady}
-            className="flex-1"
+            className="flex-1 h-10"
           />
           <Button
             size="icon"
             onClick={sendMessage}
             disabled={!text.trim() || sending || !socketReady}
+            className="h-10 w-10"
           >
             <Send className="h-4 w-4" />
           </Button>

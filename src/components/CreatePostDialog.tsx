@@ -143,7 +143,7 @@ export default function CreatePostDialog({
         onOpenChange(v);
       }}
     >
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="w-[calc(100%-2rem)] sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>New Post</DialogTitle>
           <DialogDescription>

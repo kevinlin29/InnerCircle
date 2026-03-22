@@ -39,7 +39,7 @@ export default function ChatListPage() {
 
   return (
     <div className="h-full overflow-y-auto">
-      <div className="mx-auto max-w-xl px-4 py-6">
+        <div className="mx-auto max-w-xl px-4 py-6 pb-20 md:pb-6">
         <h1 className="mb-6 text-2xl font-bold tracking-tight">Messages</h1>
 
         {conversations.length === 0 ? (

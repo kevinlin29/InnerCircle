@@ -159,7 +159,7 @@ export default function ProfileView({ userId }: ProfileViewProps) {
 
   return (
     <div className="h-full overflow-y-auto">
-      <div className="mx-auto max-w-xl px-4 py-6">
+      <div className="mx-auto max-w-xl px-4 py-6 pb-20 md:pb-6">
         {/* Profile header */}
         <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start">
           <div className="relative">

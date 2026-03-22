@@ -161,7 +161,7 @@ export default function FriendsPage() {
 
   return (
     <div className="h-full overflow-y-auto">
-      <div className="mx-auto max-w-xl px-4 py-6">
+        <div className="mx-auto max-w-xl px-4 py-6 pb-20 md:pb-6">
         <div className="mb-6 flex items-center justify-between">
           <h1 className="text-2xl font-bold tracking-tight">Friends</h1>
           <Badge variant="secondary" className="gap-1.5">

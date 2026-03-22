@@ -116,7 +116,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       </aside>
 
       {/* Main content area */}
-      <main className="flex-1 min-w-0 min-h-0 relative pb-16 md:pb-0">
+      <main className="flex-1 min-w-0 min-h-0 relative">
         {children}
       </main>
 
@@ -130,7 +130,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       </Button>
 
       {/* Mobile bottom tab bar */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 flex md:hidden border-t border-border bg-background/95 backdrop-blur-md">
+      <nav className="fixed bottom-0 left-0 right-0 z-50 flex md:hidden border-t border-border bg-background/95 backdrop-blur-md safe-area-bottom">
         {navItems.map(({ href, label, icon: Icon }) => {
           const active =
             pathname === href || pathname.startsWith(href + "/");
@@ -139,7 +139,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               key={href}
               href={href}
               className={cn(
-                "flex flex-1 flex-col items-center gap-1 py-2 text-xs font-medium transition-colors",
+                "flex flex-1 flex-col items-center justify-center gap-0.5 min-h-[3rem] text-[11px] font-medium transition-colors active:scale-95",
                 active ? "text-primary" : "text-muted-foreground"
               )}
             >
