@@ -3,20 +3,38 @@
 import { useState } from "react";
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
-import { Heart, MessageCircle, MapPin, Send } from "lucide-react";
+import { Heart, MessageCircle, MapPin, Send, Trash2 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from "@/components/ui/alert-dialog";
+import { useSession } from "@/lib/auth-client";
+import { useToast } from "@/components/ui/toast";
 import type { PostItem, CommentItem } from "@/types/api";
 
 interface PostCardProps {
   post: PostItem;
   onLikeToggle?: (postId: string, liked: boolean) => void;
+  onDeleted?: (postId: string) => void;
 }
 
-export default function PostCard({ post, onLikeToggle }: PostCardProps) {
+export default function PostCard({ post, onLikeToggle, onDeleted }: PostCardProps) {
+  const { data: session } = useSession();
+  const { success, error: showError } = useToast();
   const [liked, setLiked] = useState(post.isLiked);
+  const [deleting, setDeleting] = useState(false);
+  const isMine = session?.user?.id === post.authorId;
   const [likeCount, setLikeCount] = useState(post.likeCount);
   const [showComments, setShowComments] = useState(false);
   const [comments, setComments] = useState<CommentItem[]>([]);
@@ -33,6 +51,20 @@ export default function PostCard({ post, onLikeToggle }: PostCardProps) {
         .slice(0, 2)
         .toUpperCase()
     : "?";
+
+  async function handleDelete() {
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/posts/${post.id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error();
+      success("Post deleted");
+      onDeleted?.(post.id);
+    } catch {
+      showError("Failed to delete post");
+    } finally {
+      setDeleting(false);
+    }
+  }
 
   async function toggleLike() {
     const prev = liked;
@@ -113,12 +145,42 @@ export default function PostCard({ post, onLikeToggle }: PostCardProps) {
             {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true })}
           </span>
         </div>
-        {post.lat != null && post.lng != null && (
-          <span className="ml-auto flex items-center gap-1 text-xs text-muted-foreground">
-            <MapPin className="h-3 w-3" />
-            {post.lat.toFixed(1)}, {post.lng.toFixed(1)}
-          </span>
-        )}
+        <div className="ml-auto flex items-center gap-2">
+          {post.lat != null && post.lng != null && (
+            <span className="flex items-center gap-1 text-xs text-muted-foreground">
+              <MapPin className="h-3 w-3" />
+              {post.lat.toFixed(1)}, {post.lng.toFixed(1)}
+            </span>
+          )}
+          {isMine && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="ghost" size="icon-xs" className="text-muted-foreground hover:text-destructive">
+                  <Trash2 className="h-3.5 w-3.5" />
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete post?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This action cannot be undone. This will permanently delete your post
+                    and all its comments and likes.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={handleDelete}
+                    disabled={deleting}
+                    className="bg-destructive text-white hover:bg-destructive/90"
+                  >
+                    {deleting ? "Deleting..." : "Delete"}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
+        </div>
       </div>
 
       {/* Text */}

@@ -86,7 +86,11 @@ export default function HomeFeedPage() {
         ) : (
           <div className="flex flex-col gap-4">
             {posts.map((post) => (
-              <PostCard key={post.id} post={post} />
+              <PostCard
+                key={post.id}
+                post={post}
+                onDeleted={(id) => setPosts((prev) => prev.filter((p) => p.id !== id))}
+              />
             ))}
 
             {hasMore && (
