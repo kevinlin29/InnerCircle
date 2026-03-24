@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useCallback, useMemo } from "react";
+import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import type { GlobeMethods } from "react-globe.gl";
 import type { PostItem } from "@/types/api";
 
@@ -36,6 +36,21 @@ interface GlobeViewerProps {
 export default function GlobeViewer({ posts, onSelectPost }: GlobeViewerProps) {
   const globeRef = useRef<GlobeMethods | undefined>(undefined);
   const containerRef = useRef<HTMLDivElement>(null);
+  const [dimensions, setDimensions] = useState({ width: 1200, height: 800 });
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    const update = () => {
+      setDimensions({ width: el.clientWidth, height: el.clientHeight });
+    };
+    update();
+
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   const geoPoints = useMemo(
     () => posts.filter((p) => p.lat != null && p.lng != null),
@@ -98,8 +113,8 @@ export default function GlobeViewer({ posts, onSelectPost }: GlobeViewerProps) {
         }}
         onPointClick={handlePointClick}
         showPointerCursor={true}
-        width={typeof window !== "undefined" ? window.innerWidth : 1200}
-        height={typeof window !== "undefined" ? window.innerHeight : 800}
+        width={dimensions.width}
+        height={dimensions.height}
       />
     </div>
   );
