@@ -18,6 +18,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import CreatePostDialog from "@/components/CreatePostDialog";
 import NotificationPanel from "@/components/NotificationPanel";
+import ThemeToggle from "@/components/ThemeToggle";
 import { cn } from "@/lib/utils";
 
 const navItems = [
@@ -60,6 +61,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               InnerCircle
             </span>
           </div>
+          <ThemeToggle />
           <NotificationPanel />
         </div>
 
