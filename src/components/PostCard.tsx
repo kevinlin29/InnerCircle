@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useSession } from "@/lib/auth-client";
 import { useToast } from "@/components/ui/toast";
+import ImageLightbox from "@/components/ImageLightbox";
 import type { PostItem, CommentItem } from "@/types/api";
 
 interface PostCardProps {
@@ -34,6 +35,8 @@ export default function PostCard({ post, onLikeToggle, onDeleted }: PostCardProp
   const { success, error: showError } = useToast();
   const [liked, setLiked] = useState(post.isLiked);
   const [deleting, setDeleting] = useState(false);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
   const isMine = session?.user?.id === post.authorId;
   const [likeCount, setLikeCount] = useState(post.likeCount);
   const [showComments, setShowComments] = useState(false);
@@ -191,16 +194,24 @@ export default function PostCard({ post, onLikeToggle, onDeleted }: PostCardProp
       {/* Images */}
       {post.images.length > 0 && (
         <div className="flex gap-1 overflow-x-auto px-4 pb-3">
-          {post.images.map((img) => (
+          {post.images.map((img, i) => (
             <img
               key={img.id}
               src={img.imageUrl}
               alt=""
-              className="h-64 w-auto max-w-full flex-shrink-0 rounded-lg object-cover"
+              className="h-64 w-auto max-w-full flex-shrink-0 rounded-lg object-cover cursor-pointer hover:opacity-90 transition-opacity"
+              onClick={() => { setLightboxIndex(i); setLightboxOpen(true); }}
             />
           ))}
         </div>
       )}
+
+      <ImageLightbox
+        images={post.images}
+        initialIndex={lightboxIndex}
+        open={lightboxOpen}
+        onClose={() => setLightboxOpen(false)}
+      />
 
       <Separator />
 
