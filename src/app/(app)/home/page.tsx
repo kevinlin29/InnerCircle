@@ -4,10 +4,12 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { Loader2 } from "lucide-react";
 import PostCard from "@/components/PostCard";
 import PostCardSkeleton from "@/components/PostCardSkeleton";
+import ScrollToTop from "@/components/ScrollToTop";
 import type { PostItem } from "@/types/api";
 
 export default function HomeFeedPage() {
   const [posts, setPosts] = useState<PostItem[]>([]);
+  const scrollRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [cursor, setCursor] = useState<string | null>(null);
@@ -80,7 +82,7 @@ export default function HomeFeedPage() {
   }
 
   return (
-    <div className="h-full overflow-y-auto">
+    <div ref={scrollRef} className="h-full overflow-y-auto">
       <div className="mx-auto max-w-xl px-4 py-6 pb-20 md:pb-6">
         <h1 className="mb-6 text-2xl font-bold tracking-tight">Feed</h1>
 
@@ -111,6 +113,7 @@ export default function HomeFeedPage() {
           </div>
         )}
       </div>
+      <ScrollToTop containerRef={scrollRef} />
     </div>
   );
 }
