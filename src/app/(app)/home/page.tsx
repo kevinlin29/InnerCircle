@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { Loader2 } from "lucide-react";
 import PostCard from "@/components/PostCard";
+import PostCardSkeleton from "@/components/PostCardSkeleton";
 import type { PostItem } from "@/types/api";
 
 export default function HomeFeedPage() {
@@ -65,8 +66,15 @@ export default function HomeFeedPage() {
 
   if (loading) {
     return (
-      <div className="flex h-full items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      <div className="h-full overflow-y-auto">
+        <div className="mx-auto max-w-xl px-4 py-6 pb-20 md:pb-6">
+          <h1 className="mb-6 text-2xl font-bold tracking-tight">Feed</h1>
+          <div className="flex flex-col gap-4">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <PostCardSkeleton key={i} />
+            ))}
+          </div>
+        </div>
       </div>
     );
   }
