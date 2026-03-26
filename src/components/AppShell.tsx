@@ -20,6 +20,7 @@ import CreatePostDialog from "@/components/CreatePostDialog";
 import NotificationPanel from "@/components/NotificationPanel";
 import ThemeToggle from "@/components/ThemeToggle";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import KeyboardShortcuts from "@/components/KeyboardShortcuts";
 import { cn } from "@/lib/utils";
 
 const navItems = [
@@ -62,6 +63,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               InnerCircle
             </span>
           </div>
+          <KeyboardShortcuts />
           <ThemeToggle />
           <NotificationPanel />
         </div>
@@ -97,7 +99,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           })}
         </nav>
 
-        <div className="flex items-center gap-3 border-t border-sidebar-border px-3 py-3 lg:px-4">
+        <div className="flex items-center gap-3 border-t border-sidebar-border px-3 py-3 lg:px-4" role="complementary" aria-label="User info">
           <Avatar className="h-8 w-8">
             <AvatarImage src={user?.image ?? undefined} />
             <AvatarFallback className="text-xs">{initials}</AvatarFallback>
@@ -112,6 +114,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             size="icon-xs"
             onClick={handleSignOut}
             className="hidden lg:inline-flex shrink-0"
+            aria-label="Sign out"
           >
             <LogOut className="h-4 w-4" />
           </Button>
@@ -119,7 +122,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       </aside>
 
       {/* Main content area */}
-      <main className="flex-1 min-w-0 min-h-0 relative">
+      <main className="flex-1 min-w-0 min-h-0 relative" role="main">
         <ErrorBoundary>{children}</ErrorBoundary>
       </main>
 
