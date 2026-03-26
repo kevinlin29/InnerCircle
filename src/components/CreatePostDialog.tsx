@@ -15,6 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { resizeImage } from "@/lib/client-image";
+import { useToast } from "@/components/ui/toast";
 
 interface UploadedImage {
   file: File;
@@ -42,6 +43,7 @@ export default function CreatePostDialog({
   const [submitting, setSubmitting] = useState(false);
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const { success, error: showError } = useToast();
 
   const reset = useCallback(() => {
     setText("");
@@ -129,8 +131,10 @@ export default function CreatePostDialog({
       reset();
       onOpenChange(false);
       onCreated?.();
+      success("Post created!");
     } catch (err) {
       console.error("Create post error:", err);
+      showError("Failed to create post");
     } finally {
       setSubmitting(false);
       setUploading(false);

@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import PostCard from "@/components/PostCard";
 import { cropAvatar } from "@/lib/client-image";
+import { useToast } from "@/components/ui/toast";
 import type { UserProfile, PostItem } from "@/types/api";
 
 interface ProfileViewProps {
@@ -26,6 +27,7 @@ export default function ProfileView({ userId }: ProfileViewProps) {
   const [saving, setSaving] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const avatarInputRef = useRef<HTMLInputElement>(null);
+  const { success, error: showError } = useToast();
 
   useEffect(() => {
     async function load() {
@@ -83,8 +85,9 @@ export default function ProfileView({ userId }: ProfileViewProps) {
         prev ? { ...prev, name: data.user.name, bio: data.user.bio } : prev
       );
       setEditing(false);
+      success("Profile updated!");
     } catch {
-      // error
+      showError("Failed to update profile");
     } finally {
       setSaving(false);
     }
@@ -110,8 +113,9 @@ export default function ProfileView({ userId }: ProfileViewProps) {
       if (!patchRes.ok) throw new Error();
 
       setProfile((prev) => (prev ? { ...prev, image: url } : prev));
+      success("Avatar updated!");
     } catch {
-      // error
+      showError("Failed to upload avatar");
     } finally {
       setUploadingAvatar(false);
     }

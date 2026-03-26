@@ -3,10 +3,11 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
-import { Loader2, MessageCircle } from "lucide-react";
+import { MessageCircle } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useOnlineStatus } from "@/components/OnlineStatusProvider";
+import ChatListSkeleton from "@/components/ChatListSkeleton";
 import type { ConversationPreview } from "@/types/api";
 
 export default function ChatListPage() {
@@ -33,8 +34,11 @@ export default function ChatListPage() {
 
   if (loading) {
     return (
-      <div className="flex h-full items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      <div className="h-full overflow-y-auto">
+        <div className="mx-auto max-w-xl px-4 py-6 pb-20 md:pb-6">
+          <h1 className="mb-6 text-2xl font-bold tracking-tight">Messages</h1>
+          <ChatListSkeleton />
+        </div>
       </div>
     );
   }
