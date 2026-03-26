@@ -2,7 +2,7 @@ import { Server as SocketServer } from "socket.io";
 import type { Server as HttpServer } from "http";
 import { z } from "zod";
 import { prisma } from "./prisma";
-import { getFriendIds } from "./friends";
+import { areFriends, getFriendIds } from "./friends";
 
 let io: SocketServer | null = null;
 
@@ -108,6 +108,12 @@ export function initSocketServer(httpServer: HttpServer) {
     socket.on("chat:message", async (data: unknown, callback?: (msg: unknown) => void) => {
       try {
         const parsed = ChatMessageSchema.parse(data);
+
+        if (!(await areFriends(userId, parsed.receiverId))) {
+          socket.emit("error", { message: "You can only message friends" });
+          return;
+        }
+
         const [participantAId, participantBId] = [userId, parsed.receiverId].sort();
 
         // Transaction: find/create conversation + create message + update timestamp
@@ -180,9 +186,10 @@ export function initSocketServer(httpServer: HttpServer) {
     });
 
     // Handle typing indicator
-    socket.on("chat:typing", (data: unknown) => {
+    socket.on("chat:typing", async (data: unknown) => {
       try {
         const parsed = ChatTypingSchema.parse(data);
+        if (!(await areFriends(userId, parsed.receiverId))) return;
         emitToUser(parsed.receiverId, "chat:typing", { userId, isTyping: parsed.isTyping });
       } catch {
         // Silently ignore invalid typing events
