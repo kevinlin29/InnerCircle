@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireSessionForApi } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
 import { areFriends } from "@/lib/friends";
+import { emitNotification } from "@/lib/socket-server";
 
 export async function GET(
   req: NextRequest,
@@ -82,7 +83,7 @@ export async function POST(
     });
 
     if (post.authorId !== userId) {
-      await prisma.notification.create({
+      const notification = await prisma.notification.create({
         data: {
           recipientId: post.authorId,
           type: "COMMENT",
@@ -90,6 +91,17 @@ export async function POST(
           message: `${session.user.name} commented on your post`,
         },
       });
+      try {
+        emitNotification(post.authorId, {
+          id: notification.id,
+          type: notification.type,
+          message: notification.message,
+          referenceId: notification.referenceId,
+          createdAt: notification.createdAt,
+        });
+      } catch {
+        // Socket not initialized in dev
+      }
     }
 
     return NextResponse.json({ comment });
