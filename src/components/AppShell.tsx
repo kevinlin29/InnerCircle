@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import CreatePostDialog from "@/components/CreatePostDialog";
 import NotificationPanel from "@/components/NotificationPanel";
 import ThemeToggle from "@/components/ThemeToggle";
+import ErrorBoundary from "@/components/ErrorBoundary";
 import { cn } from "@/lib/utils";
 
 const navItems = [
@@ -119,7 +120,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
       {/* Main content area */}
       <main className="flex-1 min-w-0 min-h-0 relative">
-        {children}
+        <ErrorBoundary>{children}</ErrorBoundary>
       </main>
 
       {/* Mobile floating action button */}
