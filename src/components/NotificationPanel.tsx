@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useCallback } from "react";
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
 import {
@@ -21,6 +21,13 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { connectSocket, getSocket } from "@/lib/socket-client";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import {
+  setNotifications,
+  addNotification,
+  markAllRead,
+} from "@/store/slices/notificationSlice";
+import { useState } from "react";
 import type { NotificationItem, NotificationType } from "@/types/api";
 
 const TYPE_CONFIG: Record<
@@ -39,8 +46,10 @@ const TYPE_CONFIG: Record<
 };
 
 export default function NotificationPanel() {
-  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
-  const [unreadCount, setUnreadCount] = useState(0);
+  const dispatch = useAppDispatch();
+  const { items: notifications, unreadCount } = useAppSelector(
+    (s) => s.notifications
+  );
   const [open, setOpen] = useState(false);
 
   const fetchNotifications = useCallback(async () => {
@@ -48,19 +57,22 @@ export default function NotificationPanel() {
       const res = await fetch("/api/notifications");
       if (res.ok) {
         const data = await res.json();
-        setNotifications(data.notifications);
-        setUnreadCount(data.unreadCount);
+        dispatch(
+          setNotifications({
+            items: data.notifications,
+            unreadCount: data.unreadCount,
+          })
+        );
       }
     } catch {
       // error
     }
-  }, []);
+  }, [dispatch]);
 
   useEffect(() => {
     fetchNotifications();
   }, [fetchNotifications]);
 
-  // Listen for real-time notifications
   useEffect(() => {
     let mounted = true;
 
@@ -70,8 +82,7 @@ export default function NotificationPanel() {
         if (!mounted) return;
 
         socket.on("notification:new", (notification: NotificationItem) => {
-          setNotifications((prev) => [notification, ...prev]);
-          setUnreadCount((c) => c + 1);
+          dispatch(addNotification(notification));
         });
       } catch {
         // socket failed
@@ -85,9 +96,9 @@ export default function NotificationPanel() {
       const socket = getSocket();
       socket?.off("notification:new");
     };
-  }, []);
+  }, [dispatch]);
 
-  async function markAllRead() {
+  async function handleMarkAllRead() {
     try {
       const res = await fetch("/api/notifications", {
         method: "PATCH",
@@ -95,10 +106,7 @@ export default function NotificationPanel() {
         body: JSON.stringify({ markAll: true }),
       });
       if (res.ok) {
-        setNotifications((prev) =>
-          prev.map((n) => ({ ...n, read: true }))
-        );
-        setUnreadCount(0);
+        dispatch(markAllRead());
       }
     } catch {
       // error
@@ -124,7 +132,7 @@ export default function NotificationPanel() {
             <Button
               variant="ghost"
               size="xs"
-              onClick={markAllRead}
+              onClick={handleMarkAllRead}
               className="gap-1"
             >
               <Check className="h-3 w-3" />

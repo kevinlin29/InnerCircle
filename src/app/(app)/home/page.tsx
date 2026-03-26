@@ -2,27 +2,32 @@
 
 import { useEffect, useState, useCallback, useRef } from "react";
 import { Loader2, Search, X } from "lucide-react";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import {
+  setLoading,
+  setPosts,
+  appendPosts,
+  removePost,
+  updatePostText,
+} from "@/store/slices/feedSlice";
 import PostCard from "@/components/PostCard";
 import PostCardSkeleton from "@/components/PostCardSkeleton";
 import ScrollToTop from "@/components/ScrollToTop";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import type { PostItem } from "@/types/api";
 
 export default function HomeFeedPage() {
-  const [posts, setPosts] = useState<PostItem[]>([]);
+  const dispatch = useAppDispatch();
+  const { posts, loading, cursor, hasMore } = useAppSelector((s) => s.feed);
   const [searchQuery, setSearchQuery] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [cursor, setCursor] = useState<string | null>(null);
-  const [hasMore, setHasMore] = useState(true);
   const sentinelRef = useRef<HTMLDivElement>(null);
 
   const fetchPosts = useCallback(
     async (nextCursor?: string | null) => {
       const isInitial = !nextCursor;
-      if (isInitial) setLoading(true);
+      if (isInitial) dispatch(setLoading(true));
       else setLoadingMore(true);
 
       try {
@@ -33,19 +38,19 @@ export default function HomeFeedPage() {
         if (!res.ok) return;
         const data = await res.json();
 
-        setPosts((prev) =>
-          isInitial ? data.posts : [...prev, ...data.posts]
-        );
-        setCursor(data.nextCursor ?? null);
-        setHasMore(!!data.nextCursor);
+        if (isInitial) {
+          dispatch(setPosts(data.posts));
+        } else {
+          dispatch(appendPosts({ posts: data.posts, nextCursor: data.nextCursor }));
+        }
       } catch {
         // network error
       } finally {
-        setLoading(false);
+        dispatch(setLoading(false));
         setLoadingMore(false);
       }
     },
-    []
+    [dispatch]
   );
 
   useEffect(() => {
@@ -140,7 +145,10 @@ export default function HomeFeedPage() {
                 <PostCard
                   key={post.id}
                   post={post}
-                  onDeleted={(id) => setPosts((prev) => prev.filter((p) => p.id !== id))}
+                  onDeleted={(id) => dispatch(removePost(id))}
+                  onEdited={(id, text) =>
+                    dispatch(updatePostText({ postId: id, textContent: text || null }))
+                  }
                 />
               ));
             })()}

@@ -50,6 +50,16 @@ const feedSlice = createSlice({
       const post = state.posts.find((p) => p.id === action.payload);
       if (post) post.commentCount += 1;
     },
+    removePost(state, action: PayloadAction<string>) {
+      state.posts = state.posts.filter((p) => p.id !== action.payload);
+    },
+    updatePostText(
+      state,
+      action: PayloadAction<{ postId: string; textContent: string | null }>
+    ) {
+      const post = state.posts.find((p) => p.id === action.payload.postId);
+      if (post) post.textContent = action.payload.textContent;
+    },
   },
 });
 
@@ -60,5 +70,7 @@ export const {
   prependPost,
   toggleLike,
   incrementCommentCount,
+  removePost,
+  updatePostText,
 } = feedSlice.actions;
 export default feedSlice.reducer;
