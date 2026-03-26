@@ -54,6 +54,64 @@ export async function GET(
   }
 }
 
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: Promise<{ postId: string }> }
+) {
+  let session: Awaited<ReturnType<typeof requireSessionForApi>>;
+  try {
+    session = await requireSessionForApi();
+  } catch {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  try {
+    const { postId } = await params;
+    const { textContent } = await req.json();
+
+    const post = await prisma.post.findUnique({
+      where: { id: postId },
+      select: { authorId: true },
+    });
+    if (!post) return NextResponse.json({ error: "Not found" }, { status: 404 });
+    if (post.authorId !== session.user.id) {
+      return NextResponse.json({ error: "Not authorized" }, { status: 403 });
+    }
+
+    if (textContent !== undefined && typeof textContent !== "string") {
+      return NextResponse.json({ error: "Invalid text content" }, { status: 400 });
+    }
+
+    const updated = await prisma.post.update({
+      where: { id: postId },
+      data: { textContent: textContent ?? null },
+      include: {
+        author: { select: { id: true, name: true, image: true } },
+        images: { orderBy: { orderIndex: "asc" } },
+        _count: { select: { comments: true, likes: true } },
+        likes: { where: { userId: session.user.id }, select: { id: true } },
+      },
+    });
+
+    return NextResponse.json({
+      post: {
+        id: updated.id,
+        authorId: updated.authorId,
+        author: updated.author,
+        textContent: updated.textContent,
+        images: updated.images,
+        isLiked: updated.likes.length > 0,
+        likeCount: updated._count.likes,
+        commentCount: updated._count.comments,
+        createdAt: updated.createdAt,
+      },
+    });
+  } catch (err) {
+    console.error("API error:", err);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}
+
 export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ postId: string }> }

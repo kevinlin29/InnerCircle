@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
-import { Heart, MessageCircle, MapPin, Send, Trash2 } from "lucide-react";
+import { Heart, MessageCircle, MapPin, Send, Trash2, Pencil, X as XIcon, Check } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,15 +28,20 @@ interface PostCardProps {
   post: PostItem;
   onLikeToggle?: (postId: string, liked: boolean) => void;
   onDeleted?: (postId: string) => void;
+  onEdited?: (postId: string, newText: string) => void;
 }
 
-export default function PostCard({ post, onLikeToggle, onDeleted }: PostCardProps) {
+export default function PostCard({ post, onLikeToggle, onDeleted, onEdited }: PostCardProps) {
   const { data: session } = useSession();
   const { success, error: showError } = useToast();
   const [liked, setLiked] = useState(post.isLiked);
   const [deleting, setDeleting] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
+  const [editing, setEditing] = useState(false);
+  const [editText, setEditText] = useState(post.textContent ?? "");
+  const [displayText, setDisplayText] = useState(post.textContent);
+  const [saving, setSaving] = useState(false);
   const isMine = session?.user?.id === post.authorId;
   const [likeCount, setLikeCount] = useState(post.likeCount);
   const [showComments, setShowComments] = useState(false);
@@ -54,6 +59,26 @@ export default function PostCard({ post, onLikeToggle, onDeleted }: PostCardProp
         .slice(0, 2)
         .toUpperCase()
     : "?";
+
+  async function handleSaveEdit() {
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/posts/${post.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ textContent: editText.trim() || null }),
+      });
+      if (!res.ok) throw new Error();
+      setDisplayText(editText.trim() || null);
+      setEditing(false);
+      success("Post updated");
+      onEdited?.(post.id, editText.trim());
+    } catch {
+      showError("Failed to update post");
+    } finally {
+      setSaving(false);
+    }
+  }
 
   async function handleDelete() {
     setDeleting(true);
@@ -155,6 +180,16 @@ export default function PostCard({ post, onLikeToggle, onDeleted }: PostCardProp
               {post.lat.toFixed(1)}, {post.lng.toFixed(1)}
             </span>
           )}
+          {isMine && !editing && (
+            <Button
+              variant="ghost"
+              size="icon-xs"
+              className="text-muted-foreground hover:text-foreground"
+              onClick={() => { setEditText(displayText ?? ""); setEditing(true); }}
+            >
+              <Pencil className="h-3.5 w-3.5" />
+            </Button>
+          )}
           {isMine && (
             <AlertDialog>
               <AlertDialogTrigger asChild>
@@ -187,9 +222,27 @@ export default function PostCard({ post, onLikeToggle, onDeleted }: PostCardProp
       </div>
 
       {/* Text */}
-      {post.textContent && (
-        <p className="px-4 pb-2 text-sm leading-relaxed">{post.textContent}</p>
-      )}
+      {editing ? (
+        <div className="px-4 pb-2 flex items-start gap-2">
+          <textarea
+            value={editText}
+            onChange={(e) => setEditText(e.target.value)}
+            className="flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-ring"
+            rows={3}
+            autoFocus
+          />
+          <div className="flex flex-col gap-1">
+            <Button size="icon-xs" variant="ghost" onClick={handleSaveEdit} disabled={saving}>
+              <Check className="h-3.5 w-3.5 text-emerald-500" />
+            </Button>
+            <Button size="icon-xs" variant="ghost" onClick={() => setEditing(false)}>
+              <XIcon className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+        </div>
+      ) : displayText ? (
+        <p className="px-4 pb-2 text-sm leading-relaxed">{displayText}</p>
+      ) : null}
 
       {/* Images */}
       {post.images.length > 0 && (
