@@ -450,19 +450,23 @@ DigitalOcean Spaces (images)</pre>
       </div>
       <div class="demo-step">
         <span class="step-num">3</span>
-        <span><span class="step-label">Create Post</span><span class="step-detail"> &mdash; text, image upload (S3 + Sharp), geolocation</span></span>
+        <span><span class="step-label">Create Post</span><span class="step-detail"> &mdash; text, image (S3 + Sharp), required geolocation</span></span>
       </div>
       <div class="demo-step">
         <span class="step-num">4</span>
-        <span><span class="step-label">View Post Detail</span><span class="step-detail"> &mdash; image, location, like, comment</span></span>
+        <span><span class="step-label">AI Content Moderation</span><span class="step-detail"> &mdash; SightEngine API flags unsafe image &rarr; auto-delete</span></span>
       </div>
       <div class="demo-step">
         <span class="step-num">5</span>
-        <span><span class="step-label">Friends Management</span><span class="step-detail"> &mdash; search, add, cap enforcement</span></span>
+        <span><span class="step-label">View Post &amp; Interact</span><span class="step-detail"> &mdash; like, comment with real-time cross-user sync</span></span>
       </div>
       <div class="demo-step">
         <span class="step-num">6</span>
-        <span><span class="step-label">Real-Time Notification</span><span class="step-detail"> &mdash; Socket.io toast on like/comment</span></span>
+        <span><span class="step-label">Friends Management</span><span class="step-detail"> &mdash; search, add, cap enforcement</span></span>
+      </div>
+      <div class="demo-step">
+        <span class="step-num">7</span>
+        <span><span class="step-label">Real-Time Notifications</span><span class="step-detail"> &mdash; Socket.io toast, click to open post</span></span>
       </div>
     </div>
     <div class="col" style="display: flex; flex-direction: column; gap: 10px; justify-content: center;">
@@ -511,7 +515,7 @@ DigitalOcean Spaces (images)</pre>
 <div class="slide" data-slide="6 / 8">
   <div class="accent-bar"></div>
   <h1>Advanced Features</h1>
-  <h2>4 implemented (2 required)</h2>
+  <h2>5 implemented (2 required)</h2>
   <div class="columns">
     <div class="col">
       <h3>1. Authentication &amp; Authorization</h3>
@@ -523,22 +527,28 @@ DigitalOcean Spaces (images)</pre>
       <h3>2. Real-Time Functionality</h3>
       <ul>
         <li><strong>Socket.io</strong> on custom HTTP server</li>
-        <li>Live notifications on like, comment, friend request</li>
-        <li><code>useSocket()</code> hook + <code>NotificationToast</code></li>
+        <li>Live notifications: like, comment, friend request, new post</li>
+        <li>Cross-session post data sync (<code>post:updated</code> broadcast)</li>
       </ul>
-    </div>
-    <div class="col">
       <h3>3. File Handling &amp; Processing</h3>
       <ul>
         <li><strong>Sharp</strong>: resize (1920px), WebP conversion, thumbnails (400&times;400)</li>
-        <li>Uploaded to <strong>DigitalOcean Spaces</strong> (S3-compatible)</li>
-        <li>Async AI content moderation (external API)</li>
+        <li>Parallel upload to <strong>DigitalOcean Spaces</strong> (S3-compatible)</li>
       </ul>
+    </div>
+    <div class="col">
       <h3>4. Advanced State Management</h3>
       <ul>
-        <li><strong>Redux Toolkit</strong> &mdash; <code>postsSlice</code> shared across 4 components</li>
+        <li><strong>Redux Toolkit</strong> &mdash; <code>postsSlice</code> shared across 4+ components</li>
         <li>Global state: posts, filters, selected post, pagination</li>
-        <li><code>createAsyncThunk</code>, optimistic updates</li>
+        <li>Real-time sync via <code>syncPostCounts</code> action</li>
+      </ul>
+      <h3>5. Integration with External APIs</h3>
+      <ul>
+        <li><strong>SightEngine AI</strong> &mdash; cloud-based image content moderation</li>
+        <li>Sync check on upload: nudity, violence, gore, offensive</li>
+        <li>Auto-delete flagged images from S3 + user-facing rejection UI</li>
+        <li><strong>DigitalOcean Spaces</strong> &mdash; S3-compatible cloud object storage</li>
       </ul>
     </div>
   </div>
@@ -550,10 +560,11 @@ DigitalOcean Spaces (images)</pre>
   <h1>Key Technical Decisions</h1>
   <div class="columns">
     <div class="col">
-      <h3>Custom HTTP Server for WebSockets</h3>
+      <h3>Custom Server + globalThis for Socket.io</h3>
       <ul>
         <li>Next.js API Routes can't handle WebSocket upgrades</li>
-        <li><code>server.ts</code> creates HTTP server, attaches Socket.io, passes rest to Next.js</li>
+        <li><code>server.ts</code> wraps Next.js with custom HTTP server</li>
+        <li>Share Socket.io instance via <code>globalThis</code> between server (native Node) and API Routes (webpack-bundled)</li>
       </ul>
       <h3>Friend Cap: Transaction-Level Enforcement</h3>
       <ul>
@@ -562,17 +573,17 @@ DigitalOcean Spaces (images)</pre>
       </ul>
     </div>
     <div class="col">
-      <h3>Redux + react-globe.gl Compatibility</h3>
+      <h3>Dynamic Globe Marker Clustering</h3>
       <ul>
-        <li>Redux/Immer freezes store objects</li>
-        <li>three-globe needs mutable data internally</li>
-        <li>Solved: shallow-copy posts before passing to GlobeViewer</li>
+        <li>Cluster threshold scales with camera altitude: <code>altitude &times; 2.2</code></li>
+        <li>Zoomed out: clusters with count badge; zoomed in: individual pins</li>
+        <li>Low-altitude clusters expand into scrollable list panel</li>
       </ul>
-      <h3>Image Pipeline: Process Before Upload</h3>
+      <h3>AI Moderation Pipeline</h3>
       <ul>
-        <li>Sharp compresses on server <em>before</em> S3 upload</li>
-        <li>No background queue needed &mdash; synchronous within request</li>
-        <li>Parallel upload of main image + thumbnail</li>
+        <li>Upload &rarr; S3 &rarr; SightEngine API (sync, 12s timeout)</li>
+        <li>Flagged: auto-delete from S3 + return 422 with categories</li>
+        <li>Fail-open design: if API unavailable, upload proceeds</li>
       </ul>
     </div>
   </div>
