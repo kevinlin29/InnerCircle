@@ -65,6 +65,18 @@ export async function POST(req: NextRequest) {
       // Socket not initialized in dev
     }
 
+    try {
+      emitNotification(addresseeId, {
+        id: notification.id,
+        type: notification.type,
+        message: notification.message,
+        referenceId: notification.referenceId,
+        createdAt: notification.createdAt,
+      });
+    } catch {
+      // Socket.io may not be initialized; ignore
+    }
+
     return NextResponse.json({ friendship });
   } catch (err) {
     console.error("API error:", err);

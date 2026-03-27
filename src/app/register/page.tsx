@@ -50,10 +50,10 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <Card className="w-full max-w-sm">
+    <div className="flex min-h-screen items-center justify-center bg-background px-4 sm:px-6 lg:px-8">
+      <Card className="w-full max-w-[90vw] sm:max-w-sm">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold tracking-tight">
+          <CardTitle className="text-xl font-bold tracking-tight sm:text-2xl">
             InnerCircle
           </CardTitle>
           <CardDescription>Create a new account</CardDescription>

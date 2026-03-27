@@ -1,20 +1,34 @@
 "use client";
 
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useCallback, useMemo } from "react";
 import dynamic from "next/dynamic";
+import { useRouter } from "next/navigation";
 import { subDays, subYears } from "date-fns";
-import { useSession } from "@/lib/auth-client";
-import FilterPanel, {
+import { LogOut, Plus, Users } from "lucide-react";
+import { signOut, useSession } from "@/lib/auth-client";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import {
+  fetchPosts,
+  addPost,
+  selectPost,
+  setDatePreset,
+  setScope,
+  syncPostCounts,
   type DatePreset,
-  type ScopeFilter,
-} from "@/components/FilterPanel";
+} from "@/store/postsSlice";
+import { Button } from "@/components/ui/button";
+import FilterPanel from "@/components/FilterPanel";
 import PostDetailDrawer from "@/components/PostDetailDrawer";
+import CreatePostDrawer from "@/components/CreatePostDrawer";
+import NotificationToast from "@/components/NotificationToast";
+import { useSocket } from "@/hooks/useSocket";
 import type { PostItem } from "@/types/api";
+import { useState } from "react";
 
 const GlobeViewer = dynamic(() => import("@/components/GlobeViewer"), {
   ssr: false,
   loading: () => (
-    <div className="flex h-full w-full items-center justify-center bg-background">
+    <div className="flex h-screen w-screen items-center justify-center bg-background">
       <div className="h-10 w-10 animate-spin rounded-full border-2 border-muted-foreground border-t-primary" />
     </div>
   ),
@@ -37,56 +51,52 @@ function getCutoffDate(preset: DatePreset): Date | null {
 }
 
 export default function FeedPage() {
+  const router = useRouter();
+  const dispatch = useAppDispatch();
   const { data: session } = useSession();
-  const [posts, setPosts] = useState<PostItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
-  const [datePreset, setDatePreset] = useState<DatePreset>("all");
-  const [scope, setScope] = useState<ScopeFilter>("all");
+  const { items: posts, loading, selectedPostId, datePreset, scope } =
+    useAppSelector((s) => s.posts);
+  const [createOpen, setCreateOpen] = useState(false);
+
+  // Real-time notifications + post update sync via Socket.io
+  useSocket({
+    onNotification: (notification) => {
+      const addToast = (window as unknown as Record<string, unknown>)
+        .__addToast as ((n: unknown) => void) | undefined;
+      addToast?.(notification);
+
+      if (notification.type === "NEW_POST") {
+        dispatch(fetchPosts());
+      }
+    },
+    onPostUpdate: (data) => {
+      dispatch(syncPostCounts({
+        postId: data.postId,
+        likeCount: data.likeCount,
+        commentCount: data.commentCount,
+      }));
+    },
+  });
+
+  // 注册全局 __openPost，供 NotificationToast 点击时调用
+  useEffect(() => {
+    const win = window as unknown as Record<string, unknown>;
+    win.__openPost = (postId: string) => {
+      dispatch(selectPost(postId));
+    };
+    return () => { delete win.__openPost; };
+  }, [dispatch]);
 
   useEffect(() => {
-    let cancelled = false;
-
-    async function fetchAllPosts() {
-      setLoading(true);
-      const allPosts: PostItem[] = [];
-      let cursor: string | null = null;
-
-      try {
-        do {
-          const url: string = cursor
-            ? `/api/posts?cursor=${cursor}`
-            : "/api/posts";
-          const res = await fetch(url);
-          if (!res.ok) break;
-          const data = await res.json();
-          if (cancelled) return;
-          allPosts.push(...data.posts);
-          cursor = data.nextCursor ?? null;
-        } while (cursor);
-
-        if (!cancelled) setPosts(allPosts);
-      } catch {
-        // Network error -- keep whatever we have
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    }
-
-    fetchAllPosts();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+    dispatch(fetchPosts());
+  }, [dispatch]);
 
   const filteredPosts = useMemo(() => {
     let result = posts;
 
     const cutoff = getCutoffDate(datePreset);
     if (cutoff) {
-      result = result.filter(
-        (p) => new Date(p.createdAt) >= cutoff
-      );
+      result = result.filter((p) => new Date(p.createdAt) >= cutoff);
     }
 
     if (scope === "mine" && session?.user?.id) {
@@ -96,16 +106,31 @@ export default function FeedPage() {
     return result;
   }, [posts, datePreset, scope, session?.user?.id]);
 
-  const handleSelectPost = useCallback((postId: string) => {
-    setSelectedPostId(postId);
-  }, []);
+  const handleSelectPost = useCallback(
+    (postId: string) => {
+      dispatch(selectPost(postId));
+    },
+    [dispatch]
+  );
 
   const handleCloseDrawer = useCallback(() => {
-    setSelectedPostId(null);
-  }, []);
+    dispatch(selectPost(null));
+  }, [dispatch]);
+
+  const handlePostCreated = useCallback(
+    (newPost: PostItem) => {
+      dispatch(addPost(newPost));
+    },
+    [dispatch]
+  );
+
+  async function handleSignOut() {
+    await signOut();
+    router.push("/login");
+  }
 
   return (
-    <div className="relative h-full w-full overflow-hidden bg-background">
+    <div className="relative h-screen w-screen overflow-hidden bg-background">
       {loading ? (
         <div className="flex h-full w-full items-center justify-center">
           <div className="flex flex-col items-center gap-3">
@@ -120,11 +145,38 @@ export default function FeedPage() {
       <FilterPanel
         datePreset={datePreset}
         scope={scope}
-        onDatePresetChange={setDatePreset}
-        onScopeChange={setScope}
+        onDatePresetChange={(v) => dispatch(setDatePreset(v))}
+        onScopeChange={(v) => dispatch(setScope(v))}
       />
 
-      <div className="absolute bottom-4 left-4 z-10 rounded-lg border border-border/50 bg-background/80 px-3 py-1.5 text-xs text-muted-foreground backdrop-blur-md md:bottom-4 bottom-20">
+      {/* User info + sign out + friends link */}
+      <div className="absolute right-2 top-2 z-10 flex items-center gap-2 rounded-xl border border-border/50 bg-background/80 px-2 py-1.5 backdrop-blur-md sm:right-4 sm:top-4 sm:px-3 sm:py-2">
+        {session?.user && (
+          <span className="hidden text-sm font-medium sm:inline">
+            {session.user.name || session.user.email}
+          </span>
+        )}
+        <Button variant="ghost" size="icon-xs" asChild>
+          <a href="/friends">
+            <Users className="h-4 w-4" />
+          </a>
+        </Button>
+        <Button variant="ghost" size="icon-xs" onClick={handleSignOut}>
+          <LogOut className="h-4 w-4" />
+        </Button>
+      </div>
+
+      {/* FAB — Create Post */}
+      <Button
+        className="absolute bottom-4 right-4 z-10 h-12 w-12 rounded-full shadow-lg sm:bottom-6 sm:right-6 sm:h-14 sm:w-14"
+        size="icon-lg"
+        onClick={() => setCreateOpen(true)}
+      >
+        <Plus className="h-5 w-5 sm:h-6 sm:w-6" />
+      </Button>
+
+      {/* Post count indicator */}
+      <div className="absolute bottom-4 left-2 z-10 rounded-lg border border-border/50 bg-background/80 px-2 py-1 text-[10px] text-muted-foreground backdrop-blur-md sm:left-4 sm:px-3 sm:py-1.5 sm:text-xs">
         {filteredPosts.filter((p) => p.lat != null && p.lng != null).length}{" "}
         posts on globe
       </div>
@@ -133,6 +185,14 @@ export default function FeedPage() {
         postId={selectedPostId}
         onClose={handleCloseDrawer}
       />
+
+      <CreatePostDrawer
+        open={createOpen}
+        onOpenChange={setCreateOpen}
+        onPostCreated={handlePostCreated}
+      />
+
+      <NotificationToast />
     </div>
   );
 }

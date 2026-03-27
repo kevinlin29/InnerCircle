@@ -96,32 +96,31 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // Notify all friends about the new post (fire-and-forget)
-    getFriendIds(userId)
-      .then(async (friendIds) => {
-        for (const friendId of friendIds) {
-          try {
-            const notification = await prisma.notification.create({
-              data: {
-                recipientId: friendId,
-                type: "NEW_POST",
-                referenceId: post.id,
-                message: `${session.user.name} shared a new post`,
-              },
-            });
-            emitNotification(friendId, {
-              id: notification.id,
-              type: notification.type,
-              message: notification.message,
-              referenceId: notification.referenceId,
-              createdAt: notification.createdAt,
-            });
-          } catch {
-            // Best-effort
-          }
+    // 异步通知所有好友有新帖子
+    getFriendIds(userId).then(async (friendIds) => {
+      const userName = session.user.name || "Someone";
+      for (const friendId of friendIds) {
+        try {
+          const notification = await prisma.notification.create({
+            data: {
+              recipientId: friendId,
+              type: "NEW_POST",
+              referenceId: post.id,
+              message: `${userName} shared a new post`,
+            },
+          });
+          emitNotification(friendId, {
+            id: notification.id,
+            type: notification.type,
+            message: notification.message,
+            referenceId: notification.referenceId,
+            createdAt: notification.createdAt,
+          });
+        } catch {
+          // ignore individual notification failures
         }
-      })
-      .catch(() => {});
+      }
+    }).catch(() => {});
 
     return NextResponse.json({ post });
   } catch (err) {

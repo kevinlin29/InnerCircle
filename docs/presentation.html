@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>InnerCircle — Project Presentation</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  
+  @media print {
+    .slide { page-break-after: always; height: 100vh; }
+    .nav-controls { display: none !important; }
+    body { font-size: 14pt; }
+  }
+  
+  @media screen {
+    .slide { display: none; }
+    .slide.active { display: flex; }
+  }
+
+  body {
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+    background: #0f0f1a;
+    color: #1a1a2e;
+    line-height: 1.6;
+    overflow: hidden;
+  }
+
+  .slide {
+    width: 100vw;
+    height: 100vh;
+    padding: 60px 90px;
+    flex-direction: column;
+    justify-content: flex-start;
+    background: #ffffff;
+    position: relative;
+  }
+
+  .slide::after {
+    content: attr(data-slide);
+    position: absolute;
+    bottom: 20px;
+    right: 40px;
+    font-size: 0.85em;
+    color: #94a3b8;
+  }
+
+  .slide.title-slide {
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    color: white;
+  }
+
+  .slide.title-slide h1 {
+    font-size: 4.5em;
+    margin-bottom: 12px;
+    border: none;
+    background: linear-gradient(135deg, #a78bfa, #818cf8, #6366f1);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .slide.title-slide .subtitle {
+    font-size: 1.6em;
+    color: #c4b5fd;
+    margin-bottom: 40px;
+    font-weight: 300;
+  }
+
+  .slide.title-slide .team {
+    font-size: 1.15em;
+    color: #a5b4fc;
+    margin-top: 12px;
+  }
+
+  .slide.title-slide .course {
+    font-size: 0.95em;
+    color: #818cf8;
+    margin-top: 10px;
+  }
+
+  .slide.end-slide {
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    color: white;
+  }
+
+  .slide.end-slide h1 {
+    font-size: 3.5em;
+    border: none;
+    color: white;
+    margin-bottom: 24px;
+  }
+
+  .slide.end-slide .subtitle {
+    font-size: 1.3em;
+    color: #c4b5fd;
+    margin-bottom: 40px;
+    font-style: italic;
+  }
+
+  .slide.end-slide .team {
+    font-size: 1.1em;
+    color: #a5b4fc;
+  }
+
+  .slide.end-slide .github {
+    margin-top: 30px;
+    font-size: 1em;
+    color: #818cf8;
+  }
+
+  .slide.end-slide .github a {
+    color: #a5b4fc;
+    text-decoration: underline;
+  }
+
+  h1 {
+    font-size: 2.2em;
+    color: #1a1a2e;
+    border-bottom: 3px solid #6366f1;
+    padding-bottom: 12px;
+    margin-bottom: 28px;
+  }
+
+  h2 {
+    font-size: 1.3em;
+    color: #4338ca;
+    margin: 18px 0 12px;
+  }
+
+  h3 {
+    font-size: 1.05em;
+    color: #6366f1;
+    margin: 14px 0 8px;
+    font-weight: 600;
+  }
+
+  p { margin: 8px 0; font-size: 1em; }
+  
+  ul, ol {
+    margin: 8px 0 8px 28px;
+    font-size: 1em;
+  }
+
+  li { margin: 5px 0; }
+
+  strong, b { color: #6366f1; }
+
+  code {
+    background: #f1f5f9;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.9em;
+    font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+  }
+
+  pre {
+    background: #1e293b;
+    color: #e2e8f0;
+    padding: 16px 20px;
+    border-radius: 8px;
+    font-size: 0.88em;
+    overflow-x: auto;
+    margin: 10px 0;
+    line-height: 1.5;
+    font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+  }
+
+  .columns {
+    display: flex;
+    gap: 48px;
+    margin: 12px 0;
+    flex: 1;
+  }
+
+  .col { flex: 1; }
+
+  .highlight-box {
+    border-left: 4px solid #6366f1;
+    background: #f8fafc;
+    padding: 12px 20px;
+    margin: 12px 0;
+    border-radius: 0 6px 6px 0;
+    font-size: 0.95em;
+  }
+
+  .tag {
+    display: inline-block;
+    padding: 4px 14px;
+    border-radius: 14px;
+    font-size: 0.85em;
+    font-weight: 600;
+    margin: 3px;
+  }
+
+  .tag-green { background: #dcfce7; color: #166534; }
+  .tag-yellow { background: #fef9c3; color: #854d0e; }
+  .tag-blue { background: #dbeafe; color: #1e40af; }
+  .tag-purple { background: #ede9fe; color: #5b21b6; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.95em;
+    margin: 10px 0;
+  }
+
+  th {
+    background: #6366f1;
+    color: white;
+    padding: 10px 16px;
+    text-align: left;
+    font-weight: 600;
+  }
+
+  td {
+    padding: 8px 16px;
+    border-bottom: 1px solid #e2e8f0;
+  }
+
+  tr:nth-child(even) { background: #f8fafc; }
+
+  .nav-controls {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 16px;
+    z-index: 100;
+  }
+
+  .nav-btn {
+    background: #6366f1;
+    color: white;
+    border: none;
+    padding: 10px 24px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.9em;
+    font-weight: 500;
+    transition: background 0.2s;
+  }
+
+  .nav-btn:hover { background: #4f46e5; }
+  .nav-btn:disabled { background: #cbd5e1; cursor: not-allowed; }
+
+  .slide-counter {
+    color: white;
+    font-size: 0.9em;
+    display: flex;
+    align-items: center;
+    background: rgba(99, 102, 241, 0.3);
+    padding: 6px 16px;
+    border-radius: 8px;
+  }
+
+  .accent-bar {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #6366f1, #a78bfa, #c4b5fd);
+  }
+
+  .status-complete { color: #16a34a; font-weight: 700; }
+
+  .demo-step {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 12px 20px;
+    margin: 6px 0;
+    background: #f8fafc;
+    border-radius: 8px;
+    border-left: 4px solid #6366f1;
+    font-size: 1.05em;
+  }
+
+  .demo-step .step-num {
+    background: #6366f1;
+    color: white;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.9em;
+    flex-shrink: 0;
+  }
+
+  .demo-step .step-label {
+    font-weight: 600;
+    color: #1a1a2e;
+  }
+
+  .demo-step .step-detail {
+    color: #64748b;
+    font-size: 0.88em;
+    margin-left: 4px;
+  }
+
+  .checklist-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid #f1f5f9;
+    font-size: 1.05em;
+  }
+
+  .checklist-item .check {
+    color: #16a34a;
+    font-size: 1.3em;
+    font-weight: 700;
+  }
+
+  .screenshot {
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    border: 1px solid #e2e8f0;
+  }
+</style>
+</head>
+<body>
+
+<!-- Slide 1: Title (15s) -->
+<div class="slide title-slide active" data-slide="">
+  <h1>InnerCircle</h1>
+  <div class="subtitle">A Small-Circle Social Media Platform<br>with Geospatial Sharing</div>
+  <div class="team"><strong style="-webkit-text-fill-color: #c4b5fd;">Qiwen Lin &nbsp;&middot;&nbsp; Irys Zhang &nbsp;&middot;&nbsp; Weijie Zhu &nbsp;&middot;&nbsp; Zhengyang Li</strong></div>
+  <div class="course">University of Toronto &mdash; ECE1724 Winter 2026</div>
+</div>
+
+<!-- Slide 2: Problem & Solution (45s) -->
+<div class="slide" data-slide="2 / 8">
+  <div class="accent-bar"></div>
+  <h1>Problem &amp; Solution</h1>
+  <div class="columns">
+    <div class="col">
+      <h2>The Problem</h2>
+      <ul>
+        <li>Social media prioritizes <strong>large follower counts</strong> over meaningful connections</li>
+        <li>Users experience <strong>shallow interactions</strong> and content overload</li>
+        <li>Research: meaningful relationships limited to <strong>5&ndash;15 people</strong> (Dunbar's Number)</li>
+      </ul>
+    </div>
+    <div class="col">
+      <h2>InnerCircle</h2>
+      <ul>
+        <li><strong>Enforced friend cap (~25)</strong> &mdash; must remove a friend to add new one</li>
+        <li><strong>Geospatial sharing</strong> &mdash; posts pinned on interactive 3D globe</li>
+        <li><strong>Friend-based access control</strong> &mdash; only see posts from your circle</li>
+        <li>Target: students who want <strong>personal, not performative</strong> social media</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- Slide 3: System Architecture (45s) -->
+<div class="slide" data-slide="3 / 8">
+  <div class="accent-bar"></div>
+  <h1>System Architecture</h1>
+  <h2>Next.js Full-Stack (Option A: App Router)</h2>
+  <div class="columns">
+    <div class="col">
+      <h3>Frontend</h3>
+      <p>
+        <span class="tag tag-blue">Next.js 16</span>
+        <span class="tag tag-blue">React 19</span>
+        <span class="tag tag-blue">TypeScript</span>
+      </p>
+      <p>
+        <span class="tag tag-purple">Tailwind CSS</span>
+        <span class="tag tag-purple">shadcn/ui</span>
+        <span class="tag tag-purple">Responsive</span>
+      </p>
+      <p>
+        <span class="tag tag-green">Redux Toolkit</span>
+        <span class="tag tag-green">Socket.io Client</span>
+      </p>
+      <p>
+        <span class="tag tag-yellow">react-globe.gl</span>
+        <span class="tag tag-yellow">three.js</span>
+      </p>
+      <h3>Backend</h3>
+      <p>
+        <span class="tag tag-blue">API Routes</span>
+        <span class="tag tag-blue">Server Actions</span>
+        <span class="tag tag-blue">Server Components</span>
+      </p>
+      <p>
+        <span class="tag tag-purple">PostgreSQL</span>
+        <span class="tag tag-purple">Prisma ORM (10 models)</span>
+      </p>
+      <p>
+        <span class="tag tag-green">Better Auth</span>
+        <span class="tag tag-green">Socket.io Server</span>
+      </p>
+      <p>
+        <span class="tag tag-yellow">DigitalOcean Spaces (S3)</span>
+        <span class="tag tag-yellow">Sharp</span>
+      </p>
+    </div>
+    <div class="col">
+      <h3>Data Flow</h3>
+      <pre style="font-size: 1em; line-height: 1.7;">
+Browser
+  (React + Redux + Socket.io)
+        |
+        v
+Custom HTTP Server (server.ts)
+  |                        |
+  v                        v
+Next.js Handler       Socket.io
+  |                   (real-time)
+  v
+Prisma ORM ---> PostgreSQL
+  |
+  v
+DigitalOcean Spaces (images)</pre>
+      <div class="highlight-box">
+        <strong>Key Decision:</strong> Custom server wraps Next.js to support WebSocket connections alongside API Routes.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Slide 4: Live Demo Guide (3 min) -->
+<div class="slide" data-slide="4 / 8">
+  <div class="accent-bar"></div>
+  <h1>Live Demo</h1>
+  <h2>Full user flow: Register &rarr; Post &rarr; Interact &rarr; Friends</h2>
+  <div class="columns">
+    <div class="col">
+      <div class="demo-step">
+        <span class="step-num">1</span>
+        <span><span class="step-label">Register &amp; Login</span><span class="step-detail"> &mdash; Better Auth, session cookie</span></span>
+      </div>
+      <div class="demo-step">
+        <span class="step-num">2</span>
+        <span><span class="step-label">Globe Feed</span><span class="step-detail"> &mdash; 3D Earth, pins, filters</span></span>
+      </div>
+      <div class="demo-step">
+        <span class="step-num">3</span>
+        <span><span class="step-label">Create Post</span><span class="step-detail"> &mdash; text, image (S3 + Sharp), required geolocation</span></span>
+      </div>
+      <div class="demo-step">
+        <span class="step-num">4</span>
+        <span><span class="step-label">AI Content Moderation</span><span class="step-detail"> &mdash; SightEngine API flags unsafe image &rarr; auto-delete</span></span>
+      </div>
+      <div class="demo-step">
+        <span class="step-num">5</span>
+        <span><span class="step-label">View Post &amp; Interact</span><span class="step-detail"> &mdash; like, comment with real-time cross-user sync</span></span>
+      </div>
+      <div class="demo-step">
+        <span class="step-num">6</span>
+        <span><span class="step-label">Friends Management</span><span class="step-detail"> &mdash; search, add, cap enforcement</span></span>
+      </div>
+      <div class="demo-step">
+        <span class="step-num">7</span>
+        <span><span class="step-label">Real-Time Notifications</span><span class="step-detail"> &mdash; Socket.io toast, click to open post</span></span>
+      </div>
+    </div>
+    <div class="col" style="display: flex; flex-direction: column; gap: 10px; justify-content: center;">
+      <img src="screenshots/globe-feed.png" alt="Globe Feed" class="screenshot" style="width: 100%;">
+      <p style="font-size: 0.85em; color: #64748b; text-align: center;">Backup screenshot: Globe Feed with geo-tagged posts</p>
+    </div>
+  </div>
+</div>
+
+<!-- Slide 5: Core Requirements Checklist (30s) -->
+<div class="slide" data-slide="5 / 8">
+  <div class="accent-bar"></div>
+  <h1>Core Technical Requirements</h1>
+  <h2>Rubric checklist &mdash; all 6 items demonstrated in live demo</h2>
+  <div class="columns">
+    <div class="col">
+      <div class="checklist-item">
+        <span class="check">&#10003;</span>
+        <span><strong>TypeScript Usage</strong> &mdash; all frontend + backend code in <code>.ts</code> / <code>.tsx</code></span>
+      </div>
+      <div class="checklist-item">
+        <span class="check">&#10003;</span>
+        <span><strong>Frontend</strong> &mdash; Next.js 16 + React 19 + Tailwind CSS + shadcn/ui + responsive (<code>sm:</code>/<code>md:</code>/<code>lg:</code>)</span>
+      </div>
+      <div class="checklist-item">
+        <span class="check">&#10003;</span>
+        <span><strong>Backend</strong> &mdash; Next.js App Router: API Routes (18 endpoints) + Server Actions (5 mutations) + Server Components</span>
+      </div>
+      <div class="checklist-item">
+        <span class="check">&#10003;</span>
+        <span><strong>Frontend&ndash;Backend Integration</strong> &mdash; Redux fetches API data, Server Actions mutate, Socket.io pushes real-time updates</span>
+      </div>
+      <div class="checklist-item">
+        <span class="check">&#10003;</span>
+        <span><strong>Relational Database</strong> &mdash; PostgreSQL + Prisma ORM, 10 models, indexes, transactions</span>
+      </div>
+      <div class="checklist-item">
+        <span class="check">&#10003;</span>
+        <span><strong>Cloud Storage</strong> &mdash; DigitalOcean Spaces (S3): upload images, Sharp processing, public URLs stored in DB</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Slide 6: Advanced Features (45s) -->
+<div class="slide" data-slide="6 / 8">
+  <div class="accent-bar"></div>
+  <h1>Advanced Features</h1>
+  <h2>5 implemented (2 required)</h2>
+  <div class="columns">
+    <div class="col">
+      <h3>1. Authentication &amp; Authorization</h3>
+      <ul>
+        <li><strong>Better Auth</strong> &mdash; session-based, email/password</li>
+        <li>Route protection via <code>proxy.ts</code></li>
+        <li>Friend-based access control on every API</li>
+      </ul>
+      <h3>2. Real-Time Functionality</h3>
+      <ul>
+        <li><strong>Socket.io</strong> on custom HTTP server</li>
+        <li>Live notifications: like, comment, friend request, new post</li>
+        <li>Cross-session post data sync (<code>post:updated</code> broadcast)</li>
+      </ul>
+      <h3>3. File Handling &amp; Processing</h3>
+      <ul>
+        <li><strong>Sharp</strong>: resize (1920px), WebP conversion, thumbnails (400&times;400)</li>
+        <li>Parallel upload to <strong>DigitalOcean Spaces</strong> (S3-compatible)</li>
+      </ul>
+    </div>
+    <div class="col">
+      <h3>4. Advanced State Management</h3>
+      <ul>
+        <li><strong>Redux Toolkit</strong> &mdash; <code>postsSlice</code> shared across 4+ components</li>
+        <li>Global state: posts, filters, selected post, pagination</li>
+        <li>Real-time sync via <code>syncPostCounts</code> action</li>
+      </ul>
+      <h3>5. Integration with External APIs</h3>
+      <ul>
+        <li><strong>SightEngine AI</strong> &mdash; cloud-based image content moderation</li>
+        <li>Sync check on upload: nudity, violence, gore, offensive</li>
+        <li>Auto-delete flagged images from S3 + user-facing rejection UI</li>
+        <li><strong>DigitalOcean Spaces</strong> &mdash; S3-compatible cloud object storage</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- Slide 7: Key Technical Decisions (optional backup) -->
+<div class="slide" data-slide="7 / 8">
+  <div class="accent-bar"></div>
+  <h1>Key Technical Decisions</h1>
+  <div class="columns">
+    <div class="col">
+      <h3>Custom Server + globalThis for Socket.io</h3>
+      <ul>
+        <li>Next.js API Routes can't handle WebSocket upgrades</li>
+        <li><code>server.ts</code> wraps Next.js with custom HTTP server</li>
+        <li>Share Socket.io instance via <code>globalThis</code> between server (native Node) and API Routes (webpack-bundled)</li>
+      </ul>
+      <h3>Friend Cap: Transaction-Level Enforcement</h3>
+      <ul>
+        <li>Accept handler uses <code>prisma.$transaction()</code></li>
+        <li>Prevents race condition: two concurrent accepts exceeding cap</li>
+      </ul>
+    </div>
+    <div class="col">
+      <h3>Dynamic Globe Marker Clustering</h3>
+      <ul>
+        <li>Cluster threshold scales with camera altitude: <code>altitude &times; 2.2</code></li>
+        <li>Zoomed out: clusters with count badge; zoomed in: individual pins</li>
+        <li>Low-altitude clusters expand into scrollable list panel</li>
+      </ul>
+      <h3>AI Moderation Pipeline</h3>
+      <ul>
+        <li>Upload &rarr; S3 &rarr; SightEngine API (sync, 12s timeout)</li>
+        <li>Flagged: auto-delete from S3 + return 422 with categories</li>
+        <li>Fail-open design: if API unavailable, upload proceeds</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- Slide 8: End -->
+<div class="slide end-slide" data-slide="">
+  <h1>Thank You</h1>
+  <div class="subtitle">Social media that feels personal, not performative.</div>
+  <div class="team">
+    <p><strong style="color: #c4b5fd;">Qiwen Lin &nbsp;&middot;&nbsp; Irys Zhang &nbsp;&middot;&nbsp; Weijie Zhu &nbsp;&middot;&nbsp; Zhengyang Li</strong></p>
+    <br>
+    <p style="color: #818cf8; font-size: 1em;">Questions?</p>
+  </div>
+  <div class="github">
+    GitHub: <a href="https://github.com/kevinlin29/InnerCircle">github.com/kevinlin29/InnerCircle</a>
+  </div>
+</div>
+
+<!-- Navigation Controls -->
+<div class="nav-controls">
+  <button class="nav-btn" id="prevBtn" onclick="changeSlide(-1)">&larr; Previous</button>
+  <span class="slide-counter" id="slideCounter">1 / 8</span>
+  <button class="nav-btn" id="nextBtn" onclick="changeSlide(1)">Next &rarr;</button>
+</div>
+
+<script>
+let currentSlide = 0;
+const slides = document.querySelectorAll('.slide');
+const totalSlides = slides.length;
+
+function showSlide(n) {
+  slides.forEach(s => s.classList.remove('active'));
+  currentSlide = Math.max(0, Math.min(n, totalSlides - 1));
+  slides[currentSlide].classList.add('active');
+  document.getElementById('slideCounter').textContent = `${currentSlide + 1} / ${totalSlides}`;
+  document.getElementById('prevBtn').disabled = currentSlide === 0;
+  document.getElementById('nextBtn').disabled = currentSlide === totalSlides - 1;
+}
+
+function changeSlide(delta) {
+  showSlide(currentSlide + delta);
+}
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); changeSlide(1); }
+  if (e.key === 'ArrowLeft') { e.preventDefault(); changeSlide(-1); }
+  if (e.key === 'Home') { e.preventDefault(); showSlide(0); }
+  if (e.key === 'End') { e.preventDefault(); showSlide(totalSlides - 1); }
+});
+
+showSlide(0);
+</script>
+
+</body>
+</html>

@@ -77,6 +77,18 @@ export async function POST(req: NextRequest) {
         // Socket not initialized in dev
       }
 
+      try {
+        emitNotification(result.requesterId, {
+          id: notification.id,
+          type: notification.type,
+          message: notification.message,
+          referenceId: notification.referenceId,
+          createdAt: notification.createdAt,
+        });
+      } catch {
+        // Socket.io may not be initialized; ignore
+      }
+
       invalidateFriendCache(userId);
       invalidateFriendCache(result.requesterId);
 
