@@ -7,11 +7,10 @@ A small-circle social media platform with geospatial sharing — built for meani
 | Name | Student Number | Email |
 |------|---------------|-------|
 | Qiwen Lin | *1012495104* | *qw.lin@mail.utoronto.ca* |
-| Irys Zhang | *(fill in)* | *(fill in)* |
-| Weijie Zhu | *(fill in)* | *(fill in)* |
+| Irys Zhang | *1012794424* | *irys.zhang@mail.utoronto.ca* |
+| Weijie Zhu | *1009310906* | *weijie.zhu@mail.utoronto.ca* |
 | Zhengyang Li | *1012373977* | *zhengyang.li@mail.utoronto.ca* |
 
-> **Note:** Please replace the placeholder student numbers and emails above before submission.
 
 ## Video Demo
 
