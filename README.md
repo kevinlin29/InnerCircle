@@ -13,7 +13,7 @@ A small-circle social media platform with geospatial sharing — built for meani
 
 
 ## Video Demo
-
+https://youtu.be/xh5y3W4yXYc
 
 
 ## Motivation
