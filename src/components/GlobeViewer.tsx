@@ -72,8 +72,8 @@ function clusterPosts(posts: PostItem[], threshold: number): GlobePoint[] {
         count: 1,
         posts: groupPosts,
         color: colorForAuthor(p.authorId),
-        radius: 0.4,
-        altitude: 0.06,
+        radius: 1.0,
+        altitude: 0.1,
         id: p.id,
         label: `<div style="color:#fff;font-size:13px;padding:4px 8px;background:rgba(0,0,0,.8);border-radius:6px;max-width:220px;">
           <b>${p.author.name}</b><br/>
